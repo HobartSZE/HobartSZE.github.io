@@ -188,6 +188,18 @@ footer b{color:var(--muted)}
 .code-fb tr.bad td{background:rgba(229,96,79,.13)}
 .code-fb tr.ok td{color:#a9c7ae}
 .code-fb .src-line{font-family:var(--mono);background:rgba(0,0,0,.35);border-radius:8px;padding:8px 12px;margin-top:8px;font-size:13px;color:#ffb4a6;white-space:pre-wrap;word-break:break-all}
+/* ---------- hero globe ---------- */
+.hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:44px;align-items:center;text-align:left}
+.hero-left .cta{justify-content:flex-start}
+.hero-left .stats{margin-top:40px}
+.globe-wrap{position:relative;width:100%;max-width:500px;margin:0 auto}
+#globeCv{width:100%;aspect-ratio:1;display:block;cursor:grab;touch-action:none}
+#globeCv:active{cursor:grabbing}
+.globe-bar{display:flex;align-items:center;gap:14px;justify-content:center;margin-top:6px;flex-wrap:wrap}
+.globe-bar span{font-size:12.5px;color:var(--muted2)}
+#gestureCam{position:absolute;right:6px;bottom:56px;width:118px;border-radius:10px;border:1px solid var(--line);display:none;transform:scaleX(-1);z-index:3}
+#gestureCam.on{display:block}
+@media(max-width:920px){.hero-grid{grid-template-columns:1fr;text-align:center}.hero-left .cta{justify-content:center}.hero h1{font-size:52px}}
 /* ---------- polish: scroll progress, hero glow, back-to-top ---------- */
 #scrollProg{position:fixed;top:0;left:0;height:2.5px;width:0;background:linear-gradient(90deg,var(--gold),var(--gold2));z-index:60;box-shadow:0 0 12px rgba(227,168,43,.7);transition:width .12s linear}
 .hero-glow{position:absolute;width:560px;height:560px;border-radius:50%;pointer-events:none;background:radial-gradient(circle,rgba(245,198,92,.09),transparent 62%);transform:translate(-50%,-50%);left:70%;top:24%;transition:left .5s ease-out,top .5s ease-out;z-index:-1}
@@ -259,18 +271,30 @@ select.ai-in option{background:#12151d}
 
 <header class="hero">
   <div class="hero-glow" id="heroGlow"></div>
-  <div class="kicker">Python Self-Study · 30 Lessons</div>
-  <h1>把 Python<br>一课一课<span class="grad">走完</span>。</h1>
-  <p class="sub">从第一行 print，到亲手做出一份账本报告——30 课、90 道选择题加 30 道动手编程题，每课都有会动的代码演示；你写的代码会被真的运行、逐行判定对错。进度保存在这台设备上，随时回来接着走。</p>
-  <div class="cta">
-    <button class="btn btn-gold" id="ctaStart">开始学习 →</button>
-    <button class="btn btn-ghost" id="ctaRoute">看学习路线</button>
-  </div>
-  <div class="stats">
-    <div class="stat"><div class="n"><span data-count="30">0</span><em> 课</em></div><div class="t">LESSONS</div></div>
-    <div class="stat"><div class="n"><span data-count="120">0</span><em> 题</em></div><div class="t">选择题 + 动手编程题</div></div>
-    <div class="stat"><div class="n"><span data-count="795">0</span><em> 分钟</em></div><div class="t">总时长</div></div>
-    <div class="stat"><div class="n"><span data-count="3">0</span><em> 阶段</em></div><div class="t">地基 · 工具 · 会计应用</div></div>
+  <div class="hero-grid">
+    <div class="hero-left">
+      <div class="kicker">Python Self-Study · 30 Lessons</div>
+      <h1>把 Python<br>一课一课<span class="grad">走完</span>。</h1>
+      <p class="sub">从第一行 print，到亲手做出一份账本报告——30 课、90 道选择题加 30 道动手编程题，每课都有会动的代码演示；你写的代码会被真的运行、逐行判定对错。进度保存在这台设备上，随时回来接着走。</p>
+      <div class="cta">
+        <button class="btn btn-gold" id="ctaStart">开始学习 →</button>
+        <button class="btn btn-ghost" id="ctaRoute">看学习路线</button>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="n"><span data-count="30">0</span><em> 课</em></div><div class="t">LESSONS</div></div>
+        <div class="stat"><div class="n"><span data-count="120">0</span><em> 题</em></div><div class="t">选择题 + 动手编程题</div></div>
+        <div class="stat"><div class="n"><span data-count="795">0</span><em> 分钟</em></div><div class="t">总时长</div></div>
+        <div class="stat"><div class="n"><span data-count="3">0</span><em> 阶段</em></div><div class="t">地基 · 工具 · 会计应用</div></div>
+      </div>
+    </div>
+    <div class="globe-wrap reveal">
+      <canvas id="globeCv"></canvas>
+      <div class="globe-bar">
+        <button class="btn btn-ghost" id="gestureBtn" style="padding:9px 20px;font-size:13.5px">✋ 开启手势控制</button>
+        <span id="gestureState">拖动旋转 · 滚轮缩放 · 金点是广州</span>
+      </div>
+      <video id="gestureCam" playsinline muted></video>
+    </div>
   </div>
   <div class="ide" id="heroIde">
     <div class="chip" style="right:26px;top:-19px">第 19 课 · <b>综合项目：记账本</b></div>
@@ -706,6 +730,8 @@ async function judgeCode(syncGutter){
   const cold=!pyWarm;
   btn.disabled=true; btn.textContent=cold?'正在准备 Python 环境（首次下载可能要 1–3 分钟，看网络）…':'判定中…';
   fb.className='code-fb show'; fb.innerHTML=cold?'<span class="fb-t">正在加载 Python 环境…</span><div style="margin-top:6px;color:var(--muted);font-size:13.5px">第一次运行要先下载运行环境，可能需要 1–3 分钟（看网络），之后每次判定只要几秒。请不要关掉页面。</div>':'<span class="fb-t">运行中…</span>';
+  const ime=scanIME(code);
+  if(ime){ btn.disabled=false; btn.textContent='▶ 运行并判定'; showIMEDiag(fb, ime); syncGutter(ime.line); return; }
   const files={}; (c.files||[]).forEach(f=>{ if(f==='meals.csv') files[f]=MEALS_CSV; });
   let res;
   try{ res=await runPy(code, c.pkgs||[], files, c.checkFile||null, cold?300000:25000); }
@@ -719,34 +745,93 @@ async function judgeCode(syncGutter){
   const act=(res.out||[]).join('\n').split('\n').map(s=>s.replace(/\s+$/,''));
   while(act.length&&act[act.length-1]==='') act.pop();
   const exp=c.expected.map(s=>String(s).replace(/\s+$/,''));
-  let firstBad=-1; const max=Math.max(exp.length, act.length), rows=[];
-  for(let i=0;i<max;i++){ const e=exp[i], a=act[i]; const ok=e!==undefined&&a!==undefined&&judgeEq(e,a); if(!ok&&firstBad<0) firstBad=i; rows.push({e,a,ok}); }
+  /* 判定原则（站长要求放宽）：代码没有语法/运行错误，且期望的内容都按顺序出现了，就算通过；
+     多打印的行不扣分；空白、标点全半角、简繁、数字尾数差异都忽略。缺了期望内容才判错，并指出缺的是哪一行。 */
+  let ai=0, firstMissing=-1; const rows=[];
+  for(let ei=0; ei<exp.length; ei++){ let found=false;
+    while(ai<act.length){ if(judgeEq(exp[ei], act[ai])){ found=true; ai++; break; } ai++; }
+    if(!found){ firstMissing=ei; rows.push({e:exp[ei], ok:false}); for(let k=ei+1;k<exp.length;k++) rows.push({e:exp[k], ok:false}); break; }
+    rows.push({e:exp[ei], ok:true}); }
   let fileOk=true; if(c.checkFile){ fileOk=!!res.fileExists; }
-  if(firstBad<0&&fileOk){
+  if(firstMissing<0&&fileOk){
     if(!store.codeDone.includes(l.gi)){ store.codeDone.push(l.gi); save(); }
     $('#codeState').textContent='✓ 已通过判定';
     fb.className='code-fb show pass';
-    fb.innerHTML=`<div class="fb-t">✓ 全对！</div>你的输出和标准输出逐行一致${c.checkFile?'，图文件也成功生成了':''}。这一课的动手题通过判定。`;
+    fb.innerHTML=`<div class="fb-t">✓ 通过！</div>代码没有报错，期望的内容都出现了${act.length>exp.length?'（你多打印的行不扣分）':''}${c.checkFile?'，图文件也成功生成了':''}。这一课的动手题通过判定。`;
     confettiBurst(); return;
   }
   fb.className='code-fb show fail';
   let head;
-  if(firstBad>=0){ const r=rows[firstBad];
-    head = r.a===undefined ? `第 ${firstBad+1} 行对不上：你的输出少了这一行。` : r.e===undefined ? `第 ${firstBad+1} 行对不上：你多输出了一行标准答案里没有的内容。` : `第 ${firstBad+1} 行对不上：仔细对比这一行的期望和你的输出。`;
-  } else head='输出都对，但图文件 chart.png 没有生成——检查 savefig 那一行有没有写对、顺序是不是先画后存。';
+  if(firstMissing>=0){ head=`期望的第 ${firstMissing+1} 行内容没有在你的输出里出现（多打印的行没关系，缺了期望内容不行）。检查一下是不是少算了、少打印了，或者数字不对。`;
+    const skel=s=>normBase(s).replace(/-?\d+\.?\d*/g,'#').replace(/\s+/g,'');
+    const sib=act.find(a=>skel(a)===skel(exp[firstMissing]));
+    if(sib) head+=`<br>看起来你有一行结构是对的：「${esc(sib)}」，但数字和期望的「${esc(exp[firstMissing])}」不一样——多半是算错了，检查计算过程（有没有漏加一笔、单价用错）。`; }
+  else head='输出内容都对，但图文件 chart.png 没有生成——检查 savefig 那一行有没有写对、顺序是不是先画后存。';
   fb.innerHTML=`<div class="fb-t">✗ 还差一点</div><div>${head}</div>
-   <table><tr><th style="width:44px">行</th><th>期望输出</th><th>你的输出</th></tr>
-   ${rows.map((r,i)=>`<tr class="${r.ok?'ok':'bad'}"><td>${i+1}</td><td>${r.e===undefined?'（无）':esc(r.e)}</td><td>${r.a===undefined?'（缺失）':esc(r.a)}</td></tr>`).join('')}</table>`;
+   <table><tr><th>期望出现的内容</th><th style="width:76px">状态</th></tr>
+   ${rows.map(r=>`<tr class="${r.ok?'ok':'bad'}"><td>${esc(r.e)}</td><td>${r.ok?'✓ 已出现':'✗ 没出现'}</td></tr>`).join('')}</table>
+   <div style="margin-top:10px;color:var(--muted);font-size:13px">你的完整输出：</div>
+   <div class="src-line" style="color:#d8d5cc">${act.length? esc(act.join('\n')) : '（没有任何输出）'}</div>`;
+}
+/* ----- 错误原因诊断：全角符号（中文输入法）、缩进、漏冒号、引号、变量名打错 ----- */
+const FW={'（':'(','）':')','＂':'"','＇':"'",'：':':','；':';','，':',','．':'.','！':'!','？':'?','＝':'=','＋':'+','＜':'<','＞':'>','［':'[','］':']','｛':'{','｝':'}','％':'%','＊':'*','－':'-','＿':'_'};
+function scanIME(code){
+  const lines=code.split('\n'); let inStr=null, triple=false, esc=false;
+  for(let li=0; li<lines.length; li++){ const line=lines[li];
+    for(let ci=0; ci<line.length; ci++){ const ch=line[ci];
+      if(inStr){ if(esc){ esc=false; continue; } if(ch==='\\'){ esc=true; continue; }
+        if(triple){ if(line.substr(ci,3)===inStr){ inStr=null; triple=false; ci+=2; } continue; }
+        if(ch===inStr) inStr=null; continue; }
+      if(ch==='#') break;
+      if(ch==='"'||ch==="'"){ const t3=line.substr(ci,3), q3=ch+ch+ch;
+        if(t3===q3){ inStr=t3; triple=true; ci+=2; } else inStr=ch; continue; }
+      if(FW[ch]) return {line:li+1, ch, half:FW[ch], src:line};
+      if(ch==='\u3000') return {line:li+1, ch:'　', half:' ', src:line, space:true};
+    }
+    if(!triple) inStr=null;
+  }
+  return null;
+}
+function showIMEDiag(fb, ime){
+  fb.className='code-fb show fail';
+  fb.innerHTML=`<div class="fb-t">✗ 第 ${ime.line} 行有个符号是中文输入法打的</div>
+   <div>「${ime.space?'全角空格':ime.ch}」是<b>全角符号</b>，多半是打代码时输入法没切到英文。Python 只认半角符号，把它换成「${ime.space?'半角空格':ime.half}」再运行。字符串里面的中文标点没问题，指的是代码本身的符号。</div>
+   <div class="src-line">第 ${ime.line} 行：${esc(ime.src)}</div>`;
+}
+function lev(a,b){ const dp=[]; for(let i=0;i<=a.length;i++){ dp.push([i]); } for(let j=0;j<=b.length;j++) dp[0][j]=j;
+  for(let i=1;i<=a.length;i++) for(let j=1;j<=b.length;j++) dp[i][j]=Math.min(dp[i-1][j]+1, dp[i][j-1]+1, dp[i-1][j-1]+(a[i-1]===b[j-1]?0:1));
+  return dp[a.length][b.length]; }
+function suggestName(code, bad){
+  const names=new Set(); let m;
+  const pats=[/([A-Za-z_]\w*)\s*=/g, /def\s+([A-Za-z_]\w*)/g, /for\s+([A-Za-z_]\w*)\s+in/g, /import\s+([A-Za-z_]\w*)/g];
+  pats.forEach(re=>{ while((m=re.exec(code))) names.add(m[1]); });
+  let best=null, bd=3;
+  names.forEach(n=>{ const d=lev(bad,n); if(d<bd){ bd=d; best=n; } });
+  return bd<=2? best : null;
 }
 function showCodeError(fb, code, errStr){
-  const line=errLineOf(errStr);
-  const tm=String(errStr).match(/(SyntaxError|IndentationError|NameError|TypeError|ValueError|KeyError|IndexError|ZeroDivisionError|FileNotFoundError|ModuleNotFoundError|AttributeError)/);
+  const line=errLineOf(errStr), raw=String(errStr);
+  const tm=raw.match(/(SyntaxError|IndentationError|TabError|NameError|TypeError|ValueError|KeyError|IndexError|ZeroDivisionError|FileNotFoundError|ModuleNotFoundError|AttributeError)/);
   const type=tm?tm[1]:'Error';
   const srcLine=line? (code.split('\n')[line-1]||'') : '';
-  const nm=String(errStr).match(/name '([^']+)' is not defined/);
+  let cause='';
+  if(/invalid character/.test(raw)){ const cm=raw.match(/invalid character '(.)'/);
+    cause=`代码里混进了非法字符${cm?'「'+cm[1]+'」':''}——多半是中文输入法打出的全角符号，把它换成半角英文符号再试。`; }
+  else if(/expected ':'/.test(raw)) cause='这一行末尾漏了冒号「:」——if / else / elif / for / while / def 这些行，最后都要加一个半角冒号。';
+  else if(/unterminated string|EOL while scanning/.test(raw)) cause='引号没有关上——字符串前后的引号要成对、要是同一种，检查这一行的引号。';
+  else if(type==='IndentationError'||type==='TabError'){
+    if(/^\t/.test(srcLine)) cause='这一行开头用了 Tab 缩进，和其他行的空格缩进混在一起了——全篇统一用空格缩进（每层 4 个，或始终 2 个）。';
+    else if(/unindent does not match/.test(raw)) cause='这一行的缩进和它所属的那一层对不齐——Python 靠缩进分层，同一层的行必须完全对齐。';
+    else cause='缩进不对：if / for / while / def 的下一行要缩进一层（通常 4 个空格），不该缩进的行不要缩进。'; }
+  else if(type==='NameError'){ const nm=raw.match(/name '([^']+)' is not defined/);
+    if(nm&&(nm[1]==='pd'||nm[1]==='plt')) cause=`「${nm[1]}」没定义——多半是忘了在最前面先 import（import pandas as pd / import matplotlib.pyplot as plt）。`;
+    else if(nm){ const cand=suggestName(code, nm[1]);
+      cause=`名字「${nm[1]}」从来没有定义过。`+(cand?`你是不是想打「${cand}」？对照一下拼写。`:'看看是不是打错字，或者用它之前忘了先赋值（例如先写 '+nm[1]+' = ...）。'); }
+    else cause=ERR_ZH.NameError; }
+  else cause=ERR_ZH[type]||'看看报错信息，对照这一课的讲解再改。';
   fb.className='code-fb show fail';
   fb.innerHTML=`<div class="fb-t">✗ ${line?`第 ${line} 行出错`:'运行时出错'} · ${type}</div>
-   <div>${ERR_ZH[type]||'看看报错信息，对照这一课的讲解再改。'}${nm?` 出问题的名字是 <b>${esc(nm[1])}</b>。`:''}</div>
+   <div>${cause}</div>
    ${srcLine?`<div class="src-line">第 ${line} 行：${esc(srcLine)}</div>`:''}
    <div style="margin-top:8px;color:var(--muted);font-size:13px">原始报错：${esc(String(errStr).split('\n').filter(s=>s.trim()).slice(-1)[0]||'')}</div>`;
 }
@@ -786,6 +871,113 @@ $('.hero').addEventListener('mousemove',e=>{ const g=$('#heroGlow'); if(!g)retur
   g.style.left=(e.clientX-r.left)+'px'; g.style.top=(e.clientY-r.top)+'px'; });
 document.addEventListener('keydown',e=>{ if(e.key==='/'&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)){ e.preventDefault(); $('#searchBox').focus(); $('#searchBox').scrollIntoView({behavior:'smooth',block:'center'}); } });
 renderRoute(); heroLoop();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+  var cv=document.getElementById('globeCv');
+  var state=document.getElementById('gestureState'), btn=document.getElementById('gestureBtn'), video=document.getElementById('gestureCam');
+  if(!cv||typeof THREE==='undefined'){ if(state) state.textContent='地球加载失败（网络问题），刷新再试'; return; }
+  var wrap=cv.parentElement;
+  var renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+  var scene=new THREE.Scene();
+  var cam=new THREE.PerspectiveCamera(38,1,0.1,200); cam.position.set(0,0,3.15);
+  var group=new THREE.Group(); scene.add(group);
+  scene.add(new THREE.AmbientLight(0xffffff,0.55));
+  var sun=new THREE.DirectionalLight(0xffffff,1.15); sun.position.set(5,2,4); scene.add(sun);
+  var TEX='https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/textures/planets/';
+  var loader=new THREE.TextureLoader(); loader.crossOrigin='anonymous';
+  var earthMat=new THREE.MeshPhongMaterial({ color:0x1a2436,
+    normalMap:loader.load(TEX+'earth_normal_2048.jpg'), normalScale:new THREE.Vector2(0.85,0.85),
+    specularMap:loader.load(TEX+'earth_specular_2048.jpg'), specular:new THREE.Color(0x2a4a66), shininess:14 });
+  var earth=new THREE.Mesh(new THREE.SphereGeometry(1,72,72), earthMat);
+  group.add(earth);
+  loader.load('https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-blue-marble.jpg',
+    function(t){ earthMat.map=t; earthMat.color.set(0xffffff); earthMat.needsUpdate=true; },
+    undefined,
+    function(){ loader.load(TEX+'earth_atmos_2048.jpg', function(t){ earthMat.map=t; earthMat.color.set(0xffffff); earthMat.needsUpdate=true; }); });
+  loader.load(TEX+'earth_clouds_1024.png', function(t){ var c=new THREE.Mesh(new THREE.SphereGeometry(1.012,48,48), new THREE.MeshLambertMaterial({map:t,transparent:true,opacity:0.5,depthWrite:false})); c.name='clouds'; group.add(c); });
+  var atm=new THREE.Mesh(new THREE.SphereGeometry(1.16,48,48), new THREE.ShaderMaterial({
+    vertexShader:'varying vec3 vN; void main(){ vN=normalize(normalMatrix*normal); gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }',
+    fragmentShader:'varying vec3 vN; void main(){ float i=pow(0.68-dot(vN,vec3(0.0,0.0,1.0)),3.5); gl_FragColor=vec4(0.35,0.55,1.0,1.0)*i; }',
+    blending:THREE.AdditiveBlending, side:THREE.BackSide, transparent:true, depthWrite:false }));
+  scene.add(atm);
+  (function(){ var n=900, pos=new Float32Array(n*3);
+    for(var i=0;i<n;i++){ var r=30+Math.random()*50, th=Math.random()*Math.PI*2, ph=Math.acos(2*Math.random()-1);
+      pos[i*3]=r*Math.sin(ph)*Math.cos(th); pos[i*3+1]=r*Math.cos(ph)*0.6; pos[i*3+2]=r*Math.sin(ph)*Math.sin(th); }
+    var g=new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos,3));
+    scene.add(new THREE.Points(g, new THREE.PointsMaterial({color:0x93a7cc,size:0.14,transparent:true,opacity:0.85}))); })();
+  function llToV(lat,lon,r){ var phi=(90-lat)*Math.PI/180, th=(lon+180)*Math.PI/180;
+    return new THREE.Vector3(-r*Math.sin(phi)*Math.cos(th), r*Math.cos(phi), r*Math.sin(phi)*Math.sin(th)); }
+  var gz=llToV(23.13,113.26,1.005);
+  var dot=new THREE.Mesh(new THREE.SphereGeometry(0.012,12,12), new THREE.MeshBasicMaterial({color:0xf5c65c}));
+  dot.position.copy(gz); group.add(dot);
+  var ring=new THREE.Mesh(new THREE.RingGeometry(0.02,0.028,32), new THREE.MeshBasicMaterial({color:0xf5c65c,transparent:true,opacity:0.9,side:THREE.DoubleSide}));
+  ring.position.copy(gz.clone().multiplyScalar(1.002)); ring.lookAt(gz.clone().multiplyScalar(2)); group.add(ring);
+  var rotX=0.25, rotY=2.74, vX=0, vY=0.0016, zoom=3.15, tZoom=3.15, dragging=false, px=0, py=0, visible=true, gesture=false;
+  function resize(){ var w=wrap.clientWidth||480; renderer.setSize(w,w,false); cam.aspect=1; cam.updateProjectionMatrix(); }
+  resize(); addEventListener('resize',resize);
+  cv.addEventListener('pointerdown',function(e){ dragging=true; px=e.clientX; py=e.clientY; try{ cv.setPointerCapture(e.pointerId); }catch(err){} });
+  cv.addEventListener('pointermove',function(e){ if(!dragging) return; var dx=e.clientX-px, dy=e.clientY-py; px=e.clientX; py=e.clientY;
+    vY=dx*0.00045; vX=dy*0.00045; rotY+=dx*0.005; rotX=Math.max(-0.9,Math.min(0.9,rotX+dy*0.005)); });
+  function endDrag(){ dragging=false; }
+  cv.addEventListener('pointerup',endDrag); cv.addEventListener('pointercancel',endDrag);
+  cv.addEventListener('wheel',function(e){ e.preventDefault(); tZoom=Math.max(2.15,Math.min(4.4,tZoom+e.deltaY*0.0022)); },{passive:false});
+  if('IntersectionObserver' in window){ new IntersectionObserver(function(en){ visible=en[0].isIntersecting; },{threshold:0.02}).observe(wrap); }
+  (function loop(now){ requestAnimationFrame(loop); if(!visible||document.hidden) return;
+    if(!dragging){ rotY+=vY; rotX+=vX;
+      if(!gesture){ vY+=(0.0016-vY)*0.02; vX*=0.95; } else { vX*=0.9; vY*=0.9; }
+      rotX=Math.max(-0.9,Math.min(0.9,rotX)); }
+    zoom+=(tZoom-zoom)*0.08; cam.position.z=zoom;
+    group.rotation.y=rotY; group.rotation.x=rotX;
+    var cl=group.getObjectByName('clouds'); if(cl) cl.rotation.y+=0.0004;
+    var s=1+0.25*Math.sin(now*0.003); ring.scale.set(s,s,s);
+    renderer.render(scene,cam);
+  })(performance.now());
+  /* ----- gesture control: MediaPipe Hands, processed locally, never uploaded ----- */
+  var hands=null, mpCam=null, lastPalm=null;
+  function loadScript(src){ return new Promise(function(res,rej){ var s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
+  function setState(t){ if(state) state.textContent=t; }
+  function fingersUp(lm){ var tips=[8,12,16,20], pips=[6,10,14,18], c=0;
+    for(var i=0;i<4;i++){ if(lm[tips[i]].y<lm[pips[i]].y) c++; } return c; }
+  function onResults(res){
+    if(!res.multiHandLandmarks||!res.multiHandLandmarks.length){ lastPalm=null; return; }
+    var lm=res.multiHandLandmarks[0], palm=lm[9], up=fingersUp(lm);
+    var pinch=Math.hypot(lm[4].x-lm[8].x, lm[4].y-lm[8].y);
+    if(lastPalm&&up>=3){ var dx=palm.x-lastPalm.x, dy=palm.y-lastPalm.y;
+      vY=-dx*0.55; vX=dy*0.4;
+      if(Math.abs(dx)>0.09) vY=-dx*1.5; }
+    lastPalm=palm;
+    if(pinch<0.05){ tZoom=Math.max(2.15,tZoom-0.03); setState('手势中：合掌捏合 · 正在拉近'); }
+    else if(up===0){ tZoom=Math.min(4.4,tZoom+0.03); setState('手势中：握拳 · 正在拉远'); }
+    else if(up>=4){ setState('手势中：开掌移动旋转 · 挥动加速 · 合掌拉近 · 握拳拉远'); }
+  }
+  async function startGesture(){
+    btn.disabled=true; setState('正在打开摄像头…（画面只在本机处理，绝不上传）');
+    try{
+      if(!hands){
+        await loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js');
+        await loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js');
+        hands=new Hands({locateFile:function(f){ return 'https://cdn.jsdelivr.net/npm/@mediapipe/hands/'+f; }});
+        hands.setOptions({maxNumHands:1, modelComplexity:0, minDetectionConfidence:0.6, minTrackingConfidence:0.5});
+        hands.onResults(onResults);
+      }
+      mpCam=new Camera(video,{onFrame:async function(){ await hands.send({image:video}); }, width:640, height:480});
+      await mpCam.start();
+      gesture=true; video.classList.add('on'); btn.textContent='✋ 关闭手势控制';
+      setState('把手对准摄像头：开掌移动旋转 · 挥动加速 · 合掌捏合拉近 · 握拳拉远');
+    }catch(err){ setState('摄像头没打开（权限或设备问题），已切回鼠标/触摸控制'); gesture=false; }
+    btn.disabled=false;
+  }
+  function stopGesture(){
+    gesture=false; video.classList.remove('on'); btn.textContent='✋ 开启手势控制';
+    try{ if(mpCam) mpCam.stop(); }catch(e){}
+    if(video.srcObject){ video.srcObject.getTracks().forEach(function(t){ t.stop(); }); video.srcObject=null; }
+    setState('拖动旋转 · 滚轮缩放 · 金点是广州');
+  }
+  btn.addEventListener('click',function(){ gesture? stopGesture() : startGesture(); });
+})();
 </script>
 </body>
 </html>
