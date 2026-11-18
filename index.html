@@ -1,17 +1,431 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hobart SZE</title>
+<title>Hobart SZE · Python 自学之旅</title>
+<meta name="description" content="30 课 Python 自学路线：从 print 到 pandas 账本报告，每课都有代码演示和互动练习。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Noto+Serif+SC:wght@600;900&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
-body { font-family: system-ui, sans-serif; text-align: center; padding: 80px 20px; color: #222; }
-h1 { font-size: 48px; margin-bottom: 16px; }
-p { font-size: 20px; color: #555; }
+:root{
+  --bg:#07090d; --bg2:#0b0e14; --panel:rgba(255,255,255,.04); --panel2:rgba(255,255,255,.07);
+  --line:rgba(255,255,255,.09); --txt:#f2efe7; --muted:#9aa3ad; --muted2:#6b7280;
+  --gold:#e3a82b; --gold2:#f5c65c; --teal:#4cc2a6; --violet:#7a6ff0; --red:#e5604f; --green:#43c465;
+  --serif:'Noto Serif SC',serif; --sans:'Noto Sans SC',sans-serif; --grot:'Space Grotesk','Noto Sans SC',sans-serif; --mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--txt);font-family:var(--sans);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+::selection{background:rgba(227,168,43,.35)}
+a{color:inherit}
+/* ---------- backdrop ---------- */
+.aurora{position:fixed;inset:0;z-index:-3;overflow:hidden;background:radial-gradient(1200px 800px at 80% -10%,#131a29 0%,var(--bg) 55%)}
+.aurora i{position:absolute;border-radius:50%;filter:blur(90px);opacity:.5;animation:drift 26s ease-in-out infinite alternate}
+.aurora i:nth-child(1){width:560px;height:560px;left:-120px;top:-160px;background:radial-gradient(circle,#8a5a12 0%,transparent 65%)}
+.aurora i:nth-child(2){width:640px;height:640px;right:-200px;top:12%;background:radial-gradient(circle,#1d3a5f 0%,transparent 65%);animation-delay:-8s}
+.aurora i:nth-child(3){width:480px;height:480px;left:32%;bottom:-260px;background:radial-gradient(circle,#14332a 0%,transparent 65%);animation-delay:-16s}
+@keyframes drift{from{transform:translate(0,0) scale(1)}to{transform:translate(60px,40px) scale(1.12)}}
+.grain{position:fixed;inset:0;z-index:-2;pointer-events:none;opacity:.05;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E")}
+/* ---------- nav ---------- */
+nav{position:fixed;top:0;left:0;right:0;z-index:50;backdrop-filter:blur(14px);background:rgba(7,9,13,.62);border-bottom:1px solid var(--line)}
+.nav-in{max-width:1120px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:14px}
+.logo{font-family:var(--grot);font-weight:700;letter-spacing:.14em;font-size:13px}
+.logo b{color:var(--gold)}
+.nav-in .sp{flex:1}
+.ringwrap{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--muted)}
+.ring{transform:rotate(-90deg)}
+.ring .bgc{stroke:rgba(255,255,255,.12)}
+.ring .fgc{stroke:var(--gold);transition:stroke-dashoffset .8s cubic-bezier(.22,1,.36,1)}
+/* ---------- hero ---------- */
+.hero{max-width:1120px;margin:0 auto;padding:158px 24px 84px;position:relative}
+.kicker{font-family:var(--grot);font-size:12px;letter-spacing:.34em;color:var(--gold2);text-transform:uppercase;display:flex;align-items:center;gap:12px}
+.kicker::before{content:"";width:34px;height:1px;background:var(--gold)}
+h1{font-family:var(--serif);font-weight:900;font-size:clamp(44px,7.2vw,84px);line-height:1.14;margin:22px 0 8px;letter-spacing:.01em}
+h1 .grad{background:linear-gradient(100deg,var(--gold2) 10%,#ffdf9e 45%,var(--gold) 90%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p.sub{color:var(--muted);font-size:clamp(15px,2vw,18px);line-height:1.85;max-width:620px;margin-top:14px}
+.cta{display:flex;gap:14px;margin-top:34px;flex-wrap:wrap}
+.btn{font-family:var(--sans);font-weight:700;font-size:15px;border-radius:999px;padding:14px 30px;cursor:pointer;border:1px solid transparent;transition:transform .18s ease,box-shadow .18s ease,background .18s}
+.btn:active{transform:scale(.97)}
+.btn-gold{background:linear-gradient(120deg,var(--gold2),var(--gold));color:#221a05;box-shadow:0 10px 34px rgba(227,168,43,.28)}
+.btn-gold:hover{transform:translateY(-2px);box-shadow:0 16px 42px rgba(227,168,43,.38)}
+.btn-ghost{background:transparent;color:var(--txt);border-color:var(--line)}
+.btn-ghost:hover{background:var(--panel2);transform:translateY(-2px)}
+.stats{display:flex;gap:clamp(22px,5vw,58px);margin-top:52px;flex-wrap:wrap}
+.stat .n{font-family:var(--grot);font-size:clamp(30px,4vw,44px);font-weight:700;color:var(--txt)}
+.stat .n em{font-style:normal;color:var(--gold)}
+.stat .t{color:var(--muted2);font-size:12.5px;letter-spacing:.18em;margin-top:4px}
+/* hero IDE */
+.ide{margin-top:58px;position:relative;border-radius:18px;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));border:1px solid var(--line);box-shadow:0 40px 90px rgba(0,0,0,.5);overflow:hidden}
+.ide-bar{display:flex;align-items:center;gap:8px;padding:13px 16px;border-bottom:1px solid var(--line);background:rgba(0,0,0,.25)}
+.dot{width:12px;height:12px;border-radius:50%}
+.ide-tab{margin-left:12px;font-family:var(--mono);font-size:12.5px;color:#cfd6dd;background:rgba(255,255,255,.06);padding:5px 14px;border-radius:8px 8px 0 0;border:1px solid var(--line);border-bottom:none}
+.ide-body{display:grid;grid-template-columns:1fr 300px;min-height:238px}
+.ide-code{padding:20px 22px;font-family:var(--mono);font-size:14.5px;line-height:1.85;white-space:pre-wrap;word-break:break-all}
+.ide-console{border-left:1px solid var(--line);background:rgba(0,0,0,.32);padding:18px;font-family:var(--mono);font-size:13px;line-height:1.9;color:#b9f0cf}
+.ide-console .hd{color:var(--muted2);font-size:11px;letter-spacing:.22em;margin-bottom:8px}
+.caret{display:inline-block;width:9px;height:18px;background:var(--gold2);vertical-align:-3px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.tok-kw{color:#c792ea}.tok-str{color:#9ece6a}.tok-num{color:#ff9e64}.tok-fn{color:#7aa2f7}.tok-cm{color:#565f89}
+.chip{position:absolute;font-family:var(--mono);font-size:12px;padding:8px 14px;border-radius:999px;background:rgba(13,16,22,.85);border:1px solid var(--line);backdrop-filter:blur(6px);animation:floaty 7s ease-in-out infinite;z-index:2}
+.chip b{color:var(--gold2);font-weight:600}
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-11px)}}
+/* ---------- route ---------- */
+.route{max-width:1120px;margin:0 auto;padding:30px 24px 40px}
+.route-head{display:flex;align-items:flex-end;gap:20px;flex-wrap:wrap;margin-bottom:8px}
+.route-head h2{font-family:var(--serif);font-weight:900;font-size:clamp(30px,4.4vw,46px)}
+.route-head p{color:var(--muted);width:100%;line-height:1.8}
+.search{margin:22px 0 6px;display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 18px;max-width:420px}
+.search input{background:none;border:none;outline:none;color:var(--txt);font-size:15px;width:100%;font-family:var(--sans)}
+.search input::placeholder{color:var(--muted2)}
+.stage{margin-top:52px;position:relative}
+.stage-head{display:flex;align-items:center;gap:16px;margin-bottom:26px}
+.medal{width:52px;height:52px;border-radius:50%;flex:none;display:grid;place-items:center;font-family:var(--serif);font-weight:900;font-size:21px;color:#221a05;background:linear-gradient(140deg,var(--gold2),var(--gold));box-shadow:0 8px 26px rgba(227,168,43,.35);position:relative;z-index:2}
+.stage-head h3{font-family:var(--serif);font-size:24px;font-weight:900}
+.stage-head .ss{color:var(--muted);font-size:13.5px;margin-top:3px}
+.stage-bar{flex:1;max-width:300px;height:6px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden;margin-left:auto}
+.stage-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));border-radius:99px;transition:width .8s cubic-bezier(.22,1,.36,1)}
+.stage-pct{font-family:var(--grot);font-size:13px;color:var(--muted);min-width:44px;text-align:right}
+.lessons{position:relative;margin-left:25px;padding-left:52px}
+.lessons::before{content:"";position:absolute;left:0;top:6px;bottom:6px;width:2px;background:rgba(255,255,255,.1);border-radius:2px}
+.lessons .fill{position:absolute;left:0;top:6px;width:2px;background:linear-gradient(180deg,var(--gold2),var(--gold));border-radius:2px;transition:height 1s cubic-bezier(.22,1,.36,1);box-shadow:0 0 14px rgba(227,168,43,.55)}
+.lsn{position:relative;margin-bottom:16px}
+.node{position:absolute;left:-52px;top:50%;transform:translate(-50%,-50%);width:38px;height:38px;border-radius:50%;background:#10141b;border:2px solid rgba(255,255,255,.22);display:grid;place-items:center;font-family:var(--grot);font-size:13.5px;font-weight:700;color:var(--muted);z-index:2;transition:all .3s}
+.lsn.done .node{background:linear-gradient(140deg,var(--gold2),var(--gold));border-color:transparent;color:#221a05;box-shadow:0 0 0 5px rgba(227,168,43,.14)}
+.lsn.current .node{border-color:var(--gold);color:var(--gold2);animation:pulse 2.2s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(227,168,43,.35)}50%{box-shadow:0 0 0 9px rgba(227,168,43,0)}}
+.card{position:relative;border-radius:16px;background:var(--panel);border:1px solid var(--line);padding:20px 22px;cursor:pointer;overflow:hidden;transition:transform .25s ease,border-color .25s,background .25s;will-change:transform}
+.card::before{content:"";position:absolute;inset:0;background:radial-gradient(340px circle at var(--mx,50%) var(--my,50%),rgba(245,198,92,.13),transparent 65%);opacity:0;transition:opacity .3s;pointer-events:none}
+.card:hover::before{opacity:1}
+.card:hover{border-color:rgba(245,198,92,.4);background:var(--panel2)}
+.card .top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.card h4{font-size:17.5px;font-weight:700;line-height:1.45}
+.tag{font-size:11px;letter-spacing:.08em;padding:4px 10px;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
+.tag.done{color:#221a05;background:linear-gradient(120deg,var(--gold2),var(--gold));border-color:transparent;font-weight:700}
+.tag.cur{color:var(--gold2);border-color:rgba(227,168,43,.5)}
+.card .meta{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--muted2)}
+.card p{color:var(--muted);font-size:14px;line-height:1.75;margin-top:9px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.flag{display:flex;align-items:center;gap:10px;color:var(--muted2);font-size:13px;margin:4px 0 10px 2px}
+.flag::before{content:"⚑";color:var(--gold);font-size:15px}
+.empty{display:none;color:var(--muted);padding:26px 4px}
+/* ---------- lesson overlay ---------- */
+.overlay{position:fixed;inset:0;z-index:80;background:rgba(4,5,8,.72);backdrop-filter:blur(8px);opacity:0;pointer-events:none;transition:opacity .3s}
+.overlay.open{opacity:1;pointer-events:auto}
+.sheet{position:absolute;left:50%;top:50%;transform:translate(-50%,-46%);width:min(860px,94vw);max-height:90vh;overflow-y:auto;background:#0d1017;border:1px solid var(--line);border-radius:22px;padding:34px clamp(20px,4vw,44px) 40px;transition:transform .38s cubic-bezier(.22,1,.36,1);box-shadow:0 50px 120px rgba(0,0,0,.6)}
+.overlay.open .sheet{transform:translate(-50%,-50%)}
+.sheet::-webkit-scrollbar{width:8px}.sheet::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:8px}
+.sh-head{display:flex;align-items:flex-start;gap:14px}
+.sh-head .stg{font-family:var(--grot);font-size:11px;letter-spacing:.26em;color:var(--gold2)}
+.sh-head h3{font-family:var(--serif);font-weight:900;font-size:clamp(23px,3.6vw,32px);line-height:1.35;margin-top:6px}
+.x{margin-left:auto;flex:none;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--panel);color:var(--txt);font-size:17px;cursor:pointer}
+.x:hover{background:var(--panel2)}
+.sec-t{font-family:var(--grot);font-size:11.5px;letter-spacing:.28em;color:var(--muted);margin:30px 0 12px;display:flex;align-items:center;gap:10px}
+.sec-t::after{content:"";flex:1;height:1px;background:var(--line)}
+.intro{font-size:15.5px;line-height:1.95;color:#d8d5cc}
+.tip{margin-top:14px;border-left:3px solid var(--gold);background:rgba(227,168,43,.08);padding:13px 18px;border-radius:0 12px 12px 0;font-size:14.5px;line-height:1.8;color:#efe3c2}
+.tip b{color:var(--gold2)}
+.codebox{border-radius:14px;background:#0a0d12;border:1px solid var(--line);overflow:hidden}
+.codebox .cb-bar{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.03)}
+.codebox .fn{font-family:var(--mono);font-size:12px;color:var(--muted);margin-left:8px}
+.runbtn{margin-left:auto;font-family:var(--sans);font-weight:700;font-size:12.5px;background:linear-gradient(120deg,var(--gold2),var(--gold));color:#221a05;border:none;border-radius:99px;padding:7px 18px;cursor:pointer}
+.runbtn:disabled{opacity:.55;cursor:default}
+.codebox pre{padding:18px 20px;font-family:var(--mono);font-size:14px;line-height:1.85;overflow-x:auto;min-height:60px}
+.console{border-top:1px dashed var(--line);padding:14px 20px;font-family:var(--mono);font-size:13.5px;line-height:1.9;color:#b9f0cf;display:none}
+.console.show{display:block}
+.console .hd{color:var(--muted2);font-size:10.5px;letter-spacing:.24em;margin-bottom:4px}
+.qdots{display:flex;gap:8px;margin-bottom:16px}
+.qdots i{width:26px;height:5px;border-radius:99px;background:rgba(255,255,255,.13);transition:background .3s}
+.qdots i.ok{background:var(--green)}.qdots i.bad{background:var(--red)}.qdots i.now{background:var(--gold)}
+.quiz-q{font-size:16.5px;font-weight:700;line-height:1.7}
+.quiz-q code{font-family:var(--mono);background:rgba(255,255,255,.07);padding:1px 7px;border-radius:6px;font-size:14.5px}
+.opts{margin-top:16px;display:grid;gap:11px}
+.opt{text-align:left;font-family:var(--sans);font-size:15px;color:var(--txt);background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:14px 18px;cursor:pointer;transition:all .18s;line-height:1.6}
+.opt:hover{border-color:rgba(245,198,92,.45);background:var(--panel2)}
+.opt code{font-family:var(--mono);font-size:13.5px}
+.opt.right{border-color:var(--green);background:rgba(67,196,101,.13);animation:sweep .5s ease}
+.opt.wrong{border-color:var(--red);background:rgba(229,96,79,.12);animation:shake .4s ease}
+.opt:disabled{cursor:default;opacity:.85}
+@keyframes sweep{0%{box-shadow:inset 0 0 0 0 rgba(67,196,101,.35)}100%{box-shadow:inset 0 0 0 60px rgba(67,196,101,0)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.why{display:none;margin-top:14px;font-size:14px;line-height:1.8;color:#cfd3c9;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+.why.show{display:block}
+.quiz-foot{display:flex;gap:12px;margin-top:22px;align-items:center;flex-wrap:wrap}
+.score{font-family:var(--grot);color:var(--muted);font-size:14px}
+.sh-nav{display:flex;gap:12px;margin-top:34px;border-top:1px solid var(--line);padding-top:22px}
+.sh-nav .btn{padding:11px 24px;font-size:14px}
+.reveal{opacity:0;transform:translateY(26px);transition:opacity .7s ease,transform .7s cubic-bezier(.22,1,.36,1)}
+.reveal.in{opacity:1;transform:none}
+footer{max-width:1120px;margin:0 auto;padding:60px 24px 70px;color:var(--muted2);font-size:13px;line-height:2;border-top:1px solid var(--line);margin-top:40px}
+footer b{color:var(--muted)}
+#confetti{position:fixed;inset:0;z-index:120;pointer-events:none}
+@media(max-width:760px){
+  .ide-body{grid-template-columns:1fr}
+  .ide-console{border-left:none;border-top:1px solid var(--line)}
+  .lessons{margin-left:8px;padding-left:40px}
+  .node{left:-40px;width:33px;height:33px;font-size:12px}
+  .chip{display:none}
+  .hero{padding-top:120px}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001s!important;transition-duration:.001s!important}
+  html{scroll-behavior:auto}
+}
 </style>
 </head>
 <body>
-<h1>Hobart SZE</h1>
-<p>歡迎來到我的個人網站</p>
+<div class="aurora"><i></i><i></i><i></i></div>
+<div class="grain"></div>
+<nav><div class="nav-in">
+  <div class="logo">HOBART <b>SZE</b> · PYTHON</div>
+  <div class="sp"></div>
+  <div class="ringwrap">
+    <svg class="ring" width="34" height="34" viewBox="0 0 34 34"><circle class="bgc" cx="17" cy="17" r="14.5" fill="none" stroke-width="3.4"/><circle class="fgc" id="ringFg" cx="17" cy="17" r="14.5" fill="none" stroke-width="3.4" stroke-linecap="round" stroke-dasharray="91.1" stroke-dashoffset="91.1"/></svg>
+    <span id="ringTxt">已完成 0 / 30 课</span>
+  </div>
+</div></nav>
+
+<header class="hero">
+  <div class="kicker">Python Self-Study · 30 Lessons</div>
+  <h1>把 Python<br>一课一课<span class="grad">走完</span>。</h1>
+  <p class="sub">从第一行 print，到亲手做出一份账本报告——30 课、90 道互动练习，每课都有会动的代码演示。进度保存在这台设备上，随时回来接着走。</p>
+  <div class="cta">
+    <button class="btn btn-gold" id="ctaStart">开始学习 →</button>
+    <button class="btn btn-ghost" id="ctaRoute">看学习路线</button>
+  </div>
+  <div class="stats">
+    <div class="stat"><div class="n"><span data-count="30">0</span><em> 课</em></div><div class="t">LESSONS</div></div>
+    <div class="stat"><div class="n"><span data-count="90">0</span><em> 题</em></div><div class="t">互动练习</div></div>
+    <div class="stat"><div class="n"><span data-count="795">0</span><em> 分钟</em></div><div class="t">总时长</div></div>
+    <div class="stat"><div class="n"><span data-count="3">0</span><em> 阶段</em></div><div class="t">地基 · 工具 · 会计应用</div></div>
+  </div>
+  <div class="ide" id="heroIde">
+    <div class="chip" style="right:26px;top:-19px">第 19 课 · <b>综合项目：记账本</b></div>
+    <div class="chip" style="left:22px;bottom:-17px;animation-delay:-3s">pandas · <b>账本报告</b></div>
+    <div class="ide-bar"><span class="dot" style="background:#ff5f57"></span><span class="dot" style="background:#febc2e"></span><span class="dot" style="background:#28c840"></span><span class="ide-tab" id="heroFile">hello.py</span></div>
+    <div class="ide-body">
+      <div class="ide-code" id="heroCode"></div>
+      <div class="ide-console"><div class="hd">运行结果 · CONSOLE</div><div id="heroOut"></div></div>
+    </div>
+  </div>
+</header>
+
+<main class="route" id="route">
+  <div class="route-head reveal">
+    <h2>学习路线</h2>
+    <p>一条线走到底：学完一课，金线就向前走一格。点任意一课开始——讲解、代码演示、练习，都在里面。</p>
+  </div>
+  <div class="search reveal"><span style="color:var(--muted2)">⌕</span><input id="searchBox" type="text" placeholder="搜索课程，例如：循环、字典、pandas…"></div>
+  <div id="stages"></div>
+  <div class="empty" id="emptyMsg">没有找到匹配的课程，换个关键词试试。</div>
+</main>
+
+<footer>
+  <b>Hobart SZE</b> · Python 自学之旅 —— 与「Python 自学空间」同一套课程的网页版。<br>
+  本站由 GitHub Pages 托管，学习进度只保存在你这台设备的浏览器里，不上传任何数据。
+</footer>
+
+<div class="overlay" id="overlay"><div class="sheet" id="sheet"></div></div>
+<canvas id="confetti"></canvas>
+<script>
+const STAGES = [{"name": "地基", "sub": "先把最核心的语法打牢", "medal": "一"}, {"name": "工具", "sub": "让程序能存数据、读文件、处理真实文本", "medal": "二"}, {"name": "会计应用", "sub": "用 pandas 把账本数据玩起来", "medal": "三"}];
+const LESSONS = [{"stage": 0, "title": "你好，Python：print 与第一行代码", "mins": 15, "intro": "print() 是你和程序对话的第一个窗口：括号里写什么，屏幕就显示什么；写算式的话，会先算出结果再显示。", "code": "print(\"你好，Python\")\nprint(19.82 + 14.24)", "out": ["你好，Python", "34.06"], "tip": "print 里写算式，会先算出结果再显示。", "quiz": [{"q": "上面代码第二行会显示什么？", "opts": ["19.82 + 14.24", "34.06", "34.06000000000001"], "ans": 1, "why": "print 里是算式时，先计算 19.82 + 14.24 = 34.06 再显示。"}, {"q": "想显示文字「午餐」原样，应该怎么写？", "opts": ["print(午餐)", "print(\"午餐\")", "print[午餐]"], "ans": 1, "why": "文字要放在引号里，变成字符串；不加引号会被当成变量名。"}, {"q": "print(3 + 4) 显示的是？", "opts": ["3 + 4", "7", "「3 + 4」"], "ans": 1, "why": "没有引号就是算式，先算再显示，结果是 7。"}], "gi": 0}, {"stage": 0, "title": "变量：给数据起个名字", "mins": 20, "intro": "变量就是给数据贴个标签：lunch = 19.82 之后，lunch 就代表这个数。赋值时先算右边，再把结果存进左边的名字。", "code": "lunch = 19.82\ndinner = 14.24\ntotal = lunch + dinner\nprint(total)", "out": ["34.06"], "tip": "先算右边 lunch + dinner，再把结果存进 total。", "quiz": [{"q": "运行后 total 的值是？", "opts": ["lunch + dinner", "34.06", "19.82"], "ans": 1, "why": "先算右边 19.82 + 14.24 = 34.06，再存进 total。"}, {"q": "x = 5 之后，再写 x = 8，x 最后是？", "opts": ["5", "13", "8"], "ans": 2, "why": "后一次赋值会覆盖前一次，x 变成 8。"}, {"q": "哪个变量名不合法？", "opts": ["meal_price", "price2", "2price"], "ans": 2, "why": "变量名不能以数字开头。"}], "gi": 1}, {"stage": 0, "title": "运算符：加减乘除与整除余数", "mins": 25, "intro": "除了 + - * /，Python 还有三个常用的：// 整除只取商，% 取余数，** 是乘方。分账、凑整、算周期全靠它们。", "code": "a = 10\nb = 3\nprint(a // b)\nprint(a % b)\nprint(a ** b)", "out": ["3", "1", "1000"], "tip": "// 是整除只取商，% 取余数，别和 / 混淆。", "quiz": [{"q": "10 // 3 和 10 % 3 分别是？", "opts": ["3 和 1", "3.33 和 1", "1 和 3"], "ans": 0, "why": "10 ÷ 3 商 3 余 1：// 取商 3，% 取余 1。"}, {"q": "2 ** 4 等于？", "opts": ["8", "16", "6"], "ans": 1, "why": "** 是乘方，2 的 4 次方 = 16。"}, {"q": "10 / 3 的结果类型是？", "opts": ["整数 3", "小数 3.333…", "字符串"], "ans": 1, "why": "/ 是普通除法，结果永远是小数（float）。"}], "gi": 2}, {"stage": 0, "title": "字符串入门：文字也是数据", "mins": 20, "intro": "引号括起来的就是字符串。字符串之间用 + 是首尾拼接，不是数学加法；顺序不同，结果就不同。", "code": "name = \"牛肉饭\"\ntext = \"今天吃\" + name\nprint(text)", "out": ["今天吃牛肉饭"], "tip": "字符串用 + 是首尾拼接，不是数学加法。", "quiz": [{"q": "\"ab\" + \"cd\" 的结果是？", "opts": ["abcd", "ab cd", "报错"], "ans": 0, "why": "字符串 + 是直接首尾相接，不加空格。"}, {"q": "\"5\" + \"3\" 的结果是？", "opts": ["8", "\"53\"", "53.0"], "ans": 1, "why": "两个都是字符串，拼接得到 \"53\"，不是加法 8。"}, {"q": "字符串 \"饭\" * 3 会得到？", "opts": ["报错", "饭饭饭", "饭 3"], "ans": 1, "why": "字符串乘整数是重复拼接。"}], "gi": 3}, {"stage": 0, "title": "f-string：把变量塞进句子里", "mins": 20, "intro": "在字符串前加 f，花括号 {} 里的变量会被自动换成它的值，拼句子、做报表标题特别顺手。", "code": "item = \"牛肉饭\"\nprice = 21.02\nprint(f\"{item}：{price} 元\")", "out": ["牛肉饭：21.02 元"], "tip": "f-string 里的 {} 会被换成变量的值。", "quiz": [{"q": "x = 7，f\"共 {x} 笔\" 显示？", "opts": ["共 {x} 笔", "共 7 笔", "共 x 笔"], "ans": 1, "why": "{} 里的变量会被替换成它的值 7。"}, {"q": "f-string 最容易漏写的是？", "opts": ["引号", "开头的 f", "花括号"], "ans": 1, "why": "忘了开头的 f，{} 就只是普通文字，不会替换。"}, {"q": "f\"{2 + 3}\" 显示？", "opts": ["{2 + 3}", "5", "2 + 3"], "ans": 1, "why": "{} 里可以放算式，会先算出 5 再显示。"}], "gi": 4}, {"stage": 0, "title": "类型转换：文字数字互转", "mins": 25, "intro": "从键盘、文件读来的数字都是字符串，要计算先用 float() 或 int() 转换；type() 可以查看一个值是什么类型。", "code": "text = \"20.5\"\nprice = float(text)\nprint(price + 10)\nprint(type(price))", "out": ["30.5", "<class 'float'>"], "tip": "字符串要先用 float() 转换，才能做加法。", "quiz": [{"q": "\"20.5\" 为什么要 float() 而不是 int()？", "opts": ["int 不能转文字", "它带小数点，int 会失败", "float 更快"], "ans": 1, "why": "\"20.5\" 有小数点，只能转成 float。"}, {"q": "int(9.9) 的结果是？", "opts": ["10", "9", "9.9"], "ans": 1, "why": "int() 直接砍掉小数部分，不四舍五入。"}, {"q": "\"abc\" 被 float() 转换会怎样？", "opts": ["得到 0", "得到 abc", "报错 ValueError"], "ans": 2, "why": "不是数字样子的字符串转换会报错。"}], "gi": 5}, {"stage": 0, "title": "input：让程序问你问题", "mins": 20, "intro": "input() 会暂停程序、等你输入。注意：它拿到的永远是字符串，要拿来算数，必须先转换类型。", "code": "name = input(\"你叫什么名字？\")\nprint(\"你好，\" + name)", "out": ["你叫什么名字？Hobart", "你好，Hobart"], "tip": "input 拿到的永远是字符串，要算数先转换。", "quiz": [{"q": "在 input 里输入 25，得到的值是？", "opts": ["数字 25", "字符串 \"25\"", "True"], "ans": 1, "why": "input 的返回值永远是字符串。"}, {"q": "想把输入当金额计算，正确写法是？", "opts": ["float(input(\"金额：\"))", "input(float(\"金额：\"))", "input + float"], "ans": 0, "why": "先 input 拿到字符串，再用 float() 包住转换。"}, {"q": "input() 执行时程序会？", "opts": ["直接跳过", "暂停等待用户输入", "自动填 0"], "ans": 1, "why": "input 会让程序停下来等输入。"}], "gi": 6}, {"stage": 0, "title": "比较运算：True 与 False", "mins": 20, "intro": ">、<、==、!= 这些比较的结果只有两种：True 或 False。它们是后面 if 判断的原料。", "code": "price = 21.02\nprint(price > 20)\nprint(price == 21.02)", "out": ["True", "True"], "tip": "比较的结果只有 True 和 False 两种。", "quiz": [{"q": "3 == \"3\" 的结果是？", "opts": ["True", "False", "报错"], "ans": 1, "why": "数字和字符串类型不同，比较结果为 False。"}, {"q": "判断「不等于」用哪个符号？", "opts": ["<>", "!=", "=/="], "ans": 1, "why": "Python 里不等于写作 !=。"}, {"q": "5 >= 5 的结果是？", "opts": ["True", "False", "5"], "ans": 0, "why": ">= 包含等于，5 >= 5 成立。"}], "gi": 7}, {"stage": 0, "title": "逻辑运算：and、or、not", "mins": 25, "intro": "and 要两边都成立才是 True；or 只要一边成立；not 把结果反过来。组合条件时先想清楚要哪种。", "code": "age = 19\nprint(age >= 18 and age < 60)", "out": ["True"], "tip": "and 要两边都成立，结果才是 True。", "quiz": [{"q": "True or False 的结果是？", "opts": ["True", "False", "报错"], "ans": 0, "why": "or 只要有一边 True 就是 True。"}, {"q": "not True 的结果是？", "opts": ["True", "False", "None"], "ans": 1, "why": "not 把布尔值反转。"}, {"q": "x = 5，x > 3 and x < 4 是？", "opts": ["True", "False", "5"], "ans": 1, "why": "x < 4 不成立，and 要求两边都成立，所以是 False。"}], "gi": 8}, {"stage": 0, "title": "if/else：让程序做选择", "mins": 20, "intro": "if 后面的条件成立，就执行缩进的那段代码；不成立就走 else。缩进不是装饰，是语法的一部分。", "code": "score = 82\nif score >= 60:\n    print(\"及格\")\nelse:\n    print(\"不及格\")", "out": ["及格"], "tip": "条件成立（82 ≥ 60）才执行下面缩进的代码。", "quiz": [{"q": "score 改成 45，会显示？", "opts": ["及格", "不及格", "两个都显示"], "ans": 1, "why": "条件不成立，走 else 分支。"}, {"q": "if 下面要执行的代码靠什么区分？", "opts": ["分号", "缩进", "括号"], "ans": 1, "why": "Python 用缩进划分代码块。"}, {"q": "if score >= 60: 这一行末尾不能少的是？", "opts": ["句号", "冒号 :", "逗号"], "ans": 1, "why": "条件行以冒号结尾，下一行缩进写要做的事。"}], "gi": 9}, {"stage": 0, "title": "elif：多分支判断", "mins": 20, "intro": "多个档位用 if / elif / else：从上往下逐个判断，命中一个分支就不再往下走，所以档位的顺序很重要。", "code": "score = 75\nif score >= 90:\n    print(\"优秀\")\nelif score >= 60:\n    print(\"及格\")\nelse:\n    print(\"不及格\")", "out": ["及格"], "tip": "从上往下判断，命中一个分支就不再往下走。", "quiz": [{"q": "score = 95 时显示？", "opts": ["优秀", "及格", "优秀和及格都显示"], "ans": 0, "why": "第一个条件就命中，执行完直接结束判断。"}, {"q": "elif 可以有几个？", "opts": ["只能 1 个", "最多 2 个", "任意多个"], "ans": 2, "why": "elif 数量不限，按需要加档位。"}, {"q": "所有条件都不成立时执行哪部分？", "opts": ["第一个 if", "else", "什么都不执行"], "ans": 1, "why": "else 是兜底分支。"}], "gi": 10}, {"stage": 0, "title": "for 循环：重复做 N 次", "mins": 30, "intro": "for 循环让一段代码重复执行。range(1, 6) 会依次给出 1、2、3、4、5——包含开头，不包含结尾。", "code": "total = 0\nfor i in range(1, 6):\n    total = total + i\nprint(total)", "out": ["15"], "tip": "range(1, 6) 取 1、2、3、4、5，不包括 6。", "quiz": [{"q": "range(1, 6) 一共循环几次？", "opts": ["6 次", "5 次", "4 次"], "ans": 1, "why": "取 1 到 5，共 5 个数。"}, {"q": "循环结束后 total 是？", "opts": ["5", "15", "21"], "ans": 1, "why": "1+2+3+4+5 = 15，逐次累加进 total。"}, {"q": "range(3) 给出的数是？", "opts": ["1、2、3", "0、1、2", "3"], "ans": 1, "why": "只写一个数时从 0 开始，到该数减 1。"}], "gi": 11}, {"stage": 0, "title": "while 循环：条件成立就继续", "mins": 30, "intro": "while 在条件成立时反复执行。循环里必须让条件有机会变假——比如每次把 count 减 1，否则就是死循环。", "code": "count = 3\nwhile count > 0:\n    print(count)\n    count = count - 1\nprint(\"开始\")", "out": ["3", "2", "1", "开始"], "tip": "循环里必须更新 count，不然条件永远成立、死循环。", "quiz": [{"q": "如果删掉 count = count - 1 会怎样？", "opts": ["只循环一次", "死循环停不下来", "报错退出"], "ans": 1, "why": "count 一直是 3，条件永远成立。"}, {"q": "while 循环最少执行几次？", "opts": ["1 次", "0 次", "2 次"], "ans": 1, "why": "先判断条件，不成立就一次都不执行。"}, {"q": "上面代码一共 print 了几次？", "opts": ["3 次", "4 次", "5 次"], "ans": 1, "why": "循环里 3 次，加上最后的「开始」共 4 次。"}], "gi": 12}, {"stage": 0, "title": "列表入门：一排格子存数据", "mins": 25, "intro": "列表用 [] 把一串数据排好队。取数靠下标：从 0 开始数，prices[0] 是第一个；len() 数一共有几个。", "code": "prices = [19.82, 14.24, 21.02]\nprint(prices[0])\nprint(len(prices))", "out": ["19.82", "3"], "tip": "下标从 0 开始数，prices[0] 是第一个。", "quiz": [{"q": "prices[2] 是哪个数？", "opts": ["14.24", "21.02", "不存在"], "ans": 1, "why": "下标 0、1、2 分别对应三个数，[2] 是第三个 21.02。"}, {"q": "prices[-1] 表示？", "opts": ["第一个", "最后一个", "报错"], "ans": 1, "why": "负下标从尾巴数，-1 是最后一个。"}, {"q": "想取最后一个又不数个数，用？", "opts": ["prices[len]", "prices[-1]", "prices[0]"], "ans": 1, "why": "prices[-1] 永远是最后一个元素。"}], "gi": 13}, {"stage": 0, "title": "列表进阶：增删与排序", "mins": 25, "intro": "append() 在末尾加一个；sort() 直接把原列表从小到大排好。很多列表方法是「就地修改」，不返回新列表。", "code": "prices = [14.24, 19.82]\nprices.append(21.02)\nprices.sort()\nprint(prices)", "out": ["[14.24, 19.82, 21.02]"], "tip": "sort() 直接改原列表，从小到大排好。", "quiz": [{"q": "append 之后列表长度变成？", "opts": ["2", "3", "不确定"], "ans": 1, "why": "原来 2 个，加 1 个变 3 个。"}, {"q": "sort() 之后 prices 本身？", "opts": ["不变，要另存", "已经被排好序", "被清空"], "ans": 1, "why": "sort() 是就地修改原列表。"}, {"q": "想从大到小排，用？", "opts": ["sort(big)", "sort(reverse=True)", "sort(-1)"], "ans": 1, "why": "给 sort 传 reverse=True 就是降序。"}], "gi": 14}, {"stage": 0, "title": "字典：按键找值", "mins": 30, "intro": "字典用「键: 值」存数据，取值靠键不用靠位置：meal[\"price\"] 直接拿到价格。键就像标签，顺序不重要。", "code": "meal = {\"name\": \"牛肉饭\", \"price\": 21.02}\nprint(meal[\"name\"])\nprint(meal[\"price\"])", "out": ["牛肉饭", "21.02"], "tip": "字典用「键」取值，不是按第几个位置。", "quiz": [{"q": "meal[0] 能拿到第一个值吗？", "opts": ["能", "不能，会报错", "拿到键"], "ans": 1, "why": "字典没有 0 这个键，用不存在的键取值会报错。"}, {"q": "给字典加一项「qty: 2」怎么写？", "opts": ["meal.add(\"qty\", 2)", "meal[\"qty\"] = 2", "meal + \"qty\""], "ans": 1, "why": "直接给新键赋值就是新增。"}, {"q": "字典和列表最大的区别是？", "opts": ["字典能存更多", "字典按键取值，列表按位置", "字典不能改"], "ans": 1, "why": "存取方式不同：键 vs 下标。"}], "gi": 15}, {"stage": 0, "title": "函数入门：把代码打包复用", "mins": 30, "intro": "def 定义函数，把一段逻辑打包起个名字；要用时调用它。return 把算好的结果交回给调用的地方。", "code": "def total(prices):\n    s = 0\n    for p in prices:\n        s = s + p\n    return s\n\nprint(total([19.82, 14.24]))", "out": ["34.06"], "tip": "return 把算好的结果交回给调用它的地方。", "quiz": [{"q": "total([19.82, 14.24]) 里 [19.82, 14.24] 是？", "opts": ["返回值", "传给函数的参数", "函数名"], "ans": 1, "why": "调用时括号里的是参数，传进函数给 prices。"}, {"q": "函数里没有 return，调用它得到？", "opts": ["0", "None", "报错"], "ans": 1, "why": "没有 return 时默认返回 None。"}, {"q": "定义函数用哪个关键字？", "opts": ["func", "def", "function"], "ans": 1, "why": "Python 用 def 定义函数。"}], "gi": 16}, {"stage": 0, "title": "函数进阶：参数与返回值", "mins": 30, "intro": "参数是函数的输入，返回值是输出。函数内部的变量是局部的，外面看不见——想把结果拿出来，只能靠 return。", "code": "def pay(amount, count):\n    total = amount * count\n    return total\n\nmoney = pay(21.02, 2)\nprint(money)", "out": ["42.04"], "tip": "函数里的 total 是局部的，外面只能靠 return 拿到。", "quiz": [{"q": "pay(21.02, 2) 中两个参数的顺序对应？", "opts": ["count 先，amount 后", "amount 先，count 后", "无所谓"], "ans": 1, "why": "按定义顺序一一对应：amount=21.02，count=2。"}, {"q": "在函数外面 print(total) 会怎样？", "opts": ["显示 42.04", "报错，total 是局部变量", "显示 None"], "ans": 1, "why": "total 只在函数内部存在。"}, {"q": "一个函数可以 return 几个值？", "opts": ["只能 1 个", "可以多个（打包成元组）", "不能 return"], "ans": 1, "why": "return a, b 会把多个值打包返回。"}], "gi": 17}, {"stage": 0, "title": "综合项目：迷你记账本", "mins": 50, "intro": "把学过的拼起来：列表存每一笔，for 循环逐笔累加，f-string 输出汇总——这就是记账本的核心骨架。", "code": "records = [19.82, 14.24, 21.02]\ntotal = 0\nfor r in records:\n    total = total + r\nprint(f\"共 {len(records)} 笔，总支出 {total} 元\")", "out": ["共 3 笔，总支出 55.08 元"], "tip": "记账本的核心就是列表存记录、循环逐笔累加。", "quiz": [{"q": "总支出 55.08 是怎么来的？", "opts": ["19.82 + 14.24 + 21.02", "三个数相乘", "len 算出来的"], "ans": 0, "why": "循环把三笔逐笔加进 total。"}, {"q": "想多记一笔 9.9，应该改哪里？", "opts": ["改 total 初值", "往 records 列表里加 9.9", "改 print"], "ans": 1, "why": "数据都在 records 里，加一笔即可，汇总自动更新。"}, {"q": "len(records) 在输出里负责显示什么？", "opts": ["总金额", "一共几笔", "最大一笔"], "ans": 1, "why": "len 数的是列表里元素的个数。"}], "gi": 18}, {"stage": 1, "title": "字符串方法：split 与伙伴们", "mins": 25, "intro": "split() 按分隔符把字符串切成列表，是处理账单文本、CSV 行的第一步。切完每一段都还是字符串，要算数先转换。", "code": "line = \"午餐,19.82\"\nparts = line.split(\",\")\nprint(parts)\nprint(parts[1])", "out": ["['午餐', '19.82']", "19.82"], "tip": "split 切完每段都是字符串，金额要用时先转 float。", "quiz": [{"q": "\"a-b-c\".split(\"-\") 的结果是？", "opts": ["\"abc\"", "['a', 'b', 'c']", "['a-b-c']"], "ans": 1, "why": "按 - 切开，得到三个字符串组成的列表。"}, {"q": "parts[1] + 1 会怎样？", "opts": ["得到 20.82", "报错，字符串不能和数字相加", "得到 \"19.821\""], "ans": 1, "why": "parts[1] 是字符串 \"19.82\"，要先 float() 才能计算。"}, {"q": "去掉字符串两头空格用？", "opts": ["strip()", "cut()", "trim()"], "ans": 0, "why": "Python 里是 strip()。"}], "gi": 19}, {"stage": 1, "title": "文件读写：把数据存下来", "mins": 25, "intro": "with open(...) as f 是读写文件的标准姿势：模式 \"w\" 写入（会覆盖），\"a\" 追加，\"r\" 读取。用 with 就不用手动关文件。", "code": "with open(\"note.txt\", \"w\") as f:\n    f.write(\"牛肉饭 21.02\")\nprint(\"已保存\")", "out": ["已保存"], "tip": "模式 \"w\" 会覆盖原文件，想追加要用 \"a\"。", "quiz": [{"q": "用 \"w\" 打开已有文件写入会？", "opts": ["在末尾追加", "覆盖原内容", "报错"], "ans": 1, "why": "\"w\" 是覆盖写，想保留旧内容用 \"a\"。"}, {"q": "with open 的好处是？", "opts": ["读得更快", "用完自动关闭文件", "不用写文件名"], "ans": 1, "why": "with 代码块结束时自动 close。"}, {"q": "读取整个文件内容用？", "opts": ["f.read()", "f.open()", "f.get()"], "ans": 0, "why": "以 \"r\" 模式打开后用 f.read()。"}], "gi": 20}, {"stage": 1, "title": "异常处理：出错也不崩", "mins": 25, "intro": "try 把可能出错的代码包起来，出错时跳去 except 执行补救，程序不会直接崩掉。except 后面写明接哪种错误更稳妥。", "code": "try:\n    price = float(\"abc\")\nexcept ValueError:\n    print(\"这不是数字\")", "out": ["这不是数字"], "tip": "except 只接得住指定类型的错误，这里是 ValueError。", "quiz": [{"q": "float(\"abc\") 抛出的错误类型是？", "opts": ["TypeError", "ValueError", "KeyError"], "ans": 1, "why": "值不合法是 ValueError。"}, {"q": "try 里的代码没出错时，except 会执行吗？", "opts": ["会", "不会", "随机"], "ans": 1, "why": "except 只在出错被触发时执行。"}, {"q": "程序遇到错误直接崩掉的坏处是？", "opts": ["没坏处", "后面的保存、提示都做不了", "跑得慢"], "ans": 1, "why": "崩溃会中断整个流程，异常处理能优雅补救。"}], "gi": 21}, {"stage": 1, "title": "标准库：datetime 与日期", "mins": 20, "intro": "标准库是 Python 自带的工具箱，import 就能用。datetime 处理日期：weekday() 里周一是 0、周日是 6，别记反。", "code": "import datetime\ntoday = datetime.date(2026, 11, 18)\nprint(today)\nprint(today.weekday())", "out": ["2026-11-18", "2"], "tip": "weekday() 里周一是 0，所以周三是 2。", "quiz": [{"q": "2026-11-18 是周三，weekday() 是 2，因为？", "opts": ["周三排第三", "周一是 0 起数", "从周日算"], "ans": 1, "why": "weekday 以周一为 0：周一0、周二1、周三2。"}, {"q": "用标准库之前要先做什么？", "opts": ["付费", "import 导入", "重启程序"], "ans": 1, "why": "import 进来才能用，不用另外安装。"}, {"q": "想生成随机数用哪个库？", "opts": ["random", "math", "os"], "ans": 0, "why": "random 是标准库里的随机工具箱。"}], "gi": 22}, {"stage": 1, "title": "CSV：表格数据怎么读", "mins": 25, "intro": "CSV 是用逗号分隔的表格文件。csv.reader 逐行读进来，每行是一个列表；注意第一行通常是表头，不是数据。", "code": "import csv\n\nwith open(\"meals.csv\") as f:\n    rows = list(csv.reader(f))\nprint(rows[0])\nprint(len(rows))", "out": ["['日期', '项目', '金额']", "4"], "tip": "rows[0] 是第一行，也就是表头，不是数据。", "quiz": [{"q": "len(rows) 是 4，说明文件里有几行数据（除表头）？", "opts": ["4 行", "3 行", "5 行"], "ans": 1, "why": "4 行里 1 行是表头，真正数据 3 行。"}, {"q": "csv.reader 读到的金额是什么类型？", "opts": ["小数", "字符串", "整数"], "ans": 1, "why": "CSV 读进来的全是字符串，要计算先转换。"}, {"q": "读 CSV 前要先 import 什么？", "opts": ["import csv", "import table", "import excel"], "ans": 0, "why": "标准库 csv 就是干这个的。"}], "gi": 23}, {"stage": 1, "title": "列表推导式：一行写循环", "mins": 20, "intro": "[p for p in prices if p > 15] 把「循环 + 筛选」压成一行：先遍历、再过滤、把留下的组成新列表。太复杂时别硬写。", "code": "prices = [19.82, 14.24, 21.02]\nbig = [p for p in prices if p > 15]\nprint(big)", "out": ["[19.82, 21.02]"], "tip": "推导式是循环加筛选压成一行，太复杂就别硬写。", "quiz": [{"q": "14.24 为什么不在结果里？", "opts": ["它不是数字", "if p > 15 把它筛掉了", "列表太短"], "ans": 1, "why": "14.24 不大于 15，被条件过滤。"}, {"q": "[x * 2 for x in [1, 2, 3]] 的结果是？", "opts": ["[1, 2, 3]", "[2, 4, 6]", "[2, 2, 2]"], "ans": 1, "why": "每个元素乘 2 后组成新列表。"}, {"q": "推导式和普通 for 相比？", "opts": ["功能更强", "只是写法更紧凑", "跑得快十倍"], "ans": 1, "why": "本质一样，胜在简洁，别为了用而用。"}], "gi": 24}, {"stage": 1, "title": "综合项目：问卷统计", "mins": 40, "intro": "问卷数据常存成字典：选项是键、人数是值。sum(values()) 算总数，再算占比、round 保留一位小数，就是一份统计。", "code": "counts = {\"满意\": 42, \"一般\": 14, \"不满意\": 7}\ntotal = sum(counts.values())\nrate = round(counts[\"满意\"] / total * 100, 1)\nprint(total, rate)", "out": ["63 66.7"], "tip": "算占比先算总数，round(…, 1) 保留一位小数。", "quiz": [{"q": "total 为什么是 63？", "opts": ["42 + 14 + 7", "数了字典的键", "round 算的"], "ans": 0, "why": "sum 把三个选项的人数加总。"}, {"q": "66.7 是怎么来的？", "opts": ["42 / 63 × 100 四舍五入一位", "42 + 24.7", "直接数出来的"], "ans": 0, "why": "满意占比 = 42/63 ≈ 66.7%。"}, {"q": "counts.values() 拿到的是？", "opts": ["所有键", "所有值（人数）", "键值对文字"], "ans": 1, "why": "values() 取字典全部的值。"}], "gi": 25}, {"stage": 2, "title": "pandas 入门：读表与求和", "mins": 30, "intro": "pandas 是处理表格的神器：read_csv 一行把 CSV 读成表，df[\"金额\"] 取一整列，.sum() 直接加总——记账统计一步到位。", "code": "import pandas as pd\n\ndf = pd.read_csv(\"meals.csv\")\nprint(df[\"金额\"].sum())", "out": ["55.08"], "tip": "df[\"金额\"] 按列名取一整列，sum() 把它加总。", "quiz": [{"q": "55.08 是哪三笔的和？", "opts": ["19.82 + 14.24 + 21.02", "只有最大一笔", "表头加数据"], "ans": 0, "why": "金额列三行加总正好是 55.08。"}, {"q": "import pandas as pd 里 pd 是？", "opts": ["新库名", "给 pandas 起的简称", "变量"], "ans": 1, "why": "as pd 是起别名，后面写 pd 更省事。"}, {"q": "想看金额列最大一笔用？", "opts": ["df[\"金额\"].max()", "df.max(\"金额\")", "max(df)"], "ans": 0, "why": "先取列，再对列调 .max()。"}], "gi": 26}, {"stage": 2, "title": "pandas 分组：groupby 汇总", "mins": 30, "intro": "groupby 是 Excel 数据透视表的代码版：先按「项目」分组，再对每组的「金额」求和，一行代码出分类汇总。", "code": "import pandas as pd\ndf = pd.read_csv(\"meals.csv\")\nprint(df.groupby(\"项目\")[\"金额\"].sum())", "out": ["项目", "午餐     19.82", "晚餐     14.24", "牛肉饭    21.02", "Name: 金额, dtype: float64"], "tip": "groupby 先按项目分组，再对每组的金额求和。", "quiz": [{"q": "groupby(\"项目\") 是按什么分组？", "opts": ["按金额大小", "按项目这一列的值", "按行号"], "ans": 1, "why": "相同项目名的行被分到同一组。"}, {"q": "如果同一项目有两行，分组求和会？", "opts": ["只留第一行", "两行加在一起", "报错"], "ans": 1, "why": "分组的意义就是把同类合并汇总。"}, {"q": "把 .sum() 换成 .mean() 会得到？", "opts": ["每组平均金额", "每组笔数", "总和不变"], "ans": 0, "why": "mean 是求平均，换聚合函数就行。"}], "gi": 27}, {"stage": 2, "title": "matplotlib：画一张柱状图", "mins": 25, "intro": "matplotlib 把数字变成图：plt.bar(横轴, 高度) 画柱子，plt.savefig 把图存成图片文件。先画、再存，顺序别反。", "code": "import matplotlib.pyplot as plt\ndays = [\"一\", \"二\", \"三\"]\ncosts = [33.06, 21.02, 25.5]\nplt.bar(days, costs)\nplt.savefig(\"chart.png\")\nprint(\"图表已保存\")", "out": ["图表已保存"], "tip": "先 bar 画好、再 savefig 存成图片文件。", "quiz": [{"q": "plt.bar 的两个参数分别是？", "opts": ["标题和颜色", "类别和数值", "文件名和格式"], "ans": 1, "why": "第一个是横轴类别，第二个是每根柱子的高度。"}, {"q": "savefig 应该在画图之前还是之后？", "opts": ["之前", "之后", "无所谓"], "ans": 1, "why": "要先把图画出来，才能存下来。"}, {"q": "\"图表已保存\" 是谁打印的？", "opts": ["matplotlib 自动的", "代码最后的 print", "savefig 返回的"], "ans": 1, "why": "那是代码里自己写的 print 提示。"}], "gi": 28}, {"stage": 2, "title": "综合项目：账本报告", "mins": 50, "intro": "终点站：读账本、算总支出、找最贵一笔——pandas 三行做出一份账本报告。学完这一课，整条路线就走通了。", "code": "import pandas as pd\ndf = pd.read_csv(\"meals.csv\")\nprint(\"总支出：\", df[\"金额\"].sum())\nprint(\"最贵一笔：\", df[\"金额\"].max())", "out": ["总支出： 55.08", "最贵一笔： 21.02"], "tip": "账本报告最常用就是 sum 求和、max 找最大一笔。", "quiz": [{"q": "「最贵一笔：21.02」里的 21.02 来自？", "opts": ["sum 的结果", "金额列的 max", "第一行数据"], "ans": 1, "why": ".max() 取金额列最大值，就是牛肉饭那笔。"}, {"q": "print 里用逗号分隔两项，输出时它们之间会？", "opts": ["紧贴着", "自动加一个空格", "换行"], "ans": 1, "why": "print 多个参数之间默认用空格分隔。"}, {"q": "想再加一行「平均每笔」，应该写？", "opts": ["df[\"金额\"].mean()", "df.mean[\"金额\"]", "sum / max"], "ans": 0, "why": "对金额列求平均用 .mean()。"}], "gi": 29}];
+</script>
+<script>
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const store=JSON.parse(localStorage.getItem('hobart-py-v1')||'{"done":[],"best":{}}');
+const save=()=>localStorage.setItem('hobart-py-v1',JSON.stringify(store));
+const doneSet=new Set(store.done);
+const totalMin=LESSONS.reduce((a,l)=>a+l.mins,0);
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function hl(code){
+  let s=esc(code);
+  s=s.replace(/(#[^\n]*)|((?:f|b|r)?"(?:[^"\\]|\\.)*"|(?:f|b|r)?'(?:[^'\\]|\\.)*')|\b(import|from|as|def|return|if|elif|else|for|while|in|not|and|or|try|except|with|True|False|None)\b|\b(\d+(?:\.\d+)?)\b|\b(print|len|range|float|int|str|type|input|sum|round|open|list|dict|append|sort|split|strip|read|write|values|keys|groupby|read_csv|bar|savefig|weekday|date)\b/g,
+   (m,cm,str,kw,num,fn)=> cm?'<span class="tok-cm">'+cm+'</span>' : str?'<span class="tok-str">'+str+'</span>' : kw?'<span class="tok-kw">'+kw+'</span>' : num?'<span class="tok-num">'+num+'</span>' : '<span class="tok-fn">'+fn+'</span>');
+  return s;
+}
+const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+/* ---------- route render ---------- */
+let gidx=0; LESSONS.forEach(l=>l.gi=gidx++);
+function firstOpen(){const i=LESSONS.findIndex(l=>!doneSet.has(l.gi));return i<0?LESSONS.length-1:i}
+function renderRoute(){
+  const wrap=$('#stages'); wrap.innerHTML='';
+  STAGES.forEach((st,si)=>{
+    const items=LESSONS.map((l,i)=>({l,i})).filter(x=>x.l.stage===si);
+    const dn=items.filter(x=>doneSet.has(x.l.gi)).length;
+    const sec=document.createElement('section'); sec.className='stage reveal';
+    sec.innerHTML=`<div class="stage-head"><div class="medal">${st.medal}</div><div><h3>阶段${st.medal} · ${st.name}</h3><div class="ss">${st.sub}</div></div><div class="stage-bar"><i style="width:${dn/items.length*100}%"></i></div><div class="stage-pct">${dn}/${items.length}</div></div>
+    <div class="lessons"><div class="fill"></div>${items.map(({l,i})=>{
+      const d=doneSet.has(l.gi), cur=l.gi===firstOpen();
+      return `<div class="lsn ${d?'done':''} ${cur&&!d?'current':''}" data-title="${l.title}">
+        <div class="node">${d?'✓':l.gi+1}</div>
+        <div class="card" data-open="${i}" tabindex="0" role="button" aria-label="打开第 ${l.gi+1} 课">
+          <div class="top"><h4>第 ${l.gi+1} 课 · ${l.title}</h4><span class="tag ${d?'done':cur?'cur':''}">${d?'已完成':cur?'当前课程':'未开始'}</span><span class="meta">${l.mins} 分钟 · ${l.quiz.length} 题</span></div>
+          <p>${l.intro}</p></div></div>`}).join('')}
+      <div class="flag">阶段${st.medal}终点 · 还剩 ${items.length-dn} 课</div>
+    </div>`;
+    wrap.appendChild(sec);
+    const fill=sec.querySelector('.fill'), list=sec.querySelector('.lessons');
+    requestAnimationFrame(()=>{fill.style.height=(dn/items.length)*(list.offsetHeight-12)+'px'});
+  });
+  bindCards(); updateRing(); observeReveals();
+}
+function updateRing(){
+  const n=doneSet.size, c=91.1;
+  $('#ringFg').style.strokeDashoffset=(c-c*n/LESSONS.length).toFixed(1);
+  $('#ringTxt').textContent=`已完成 ${n} / ${LESSONS.length} 课`;
+}
+function bindCards(){
+  $$('.card').forEach(c=>{
+    c.addEventListener('click',()=>openLesson(+c.dataset.open));
+    c.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openLesson(+c.dataset.open)}});
+    if(!reduced&&matchMedia('(hover:hover)').matches){
+      c.addEventListener('mousemove',e=>{const r=c.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
+        c.style.setProperty('--mx',x+'px');c.style.setProperty('--my',y+'px');
+        c.style.transform=`perspective(900px) rotateX(${((y/r.height)-.5)*-3.4}deg) rotateY(${((x/r.width)-.5)*3.4}deg) translateY(-2px)`});
+      c.addEventListener('mouseleave',()=>{c.style.transform=''});
+    }
+  });
+}
+/* ---------- reveal & countup ---------- */
+let io;
+function observeReveals(){ if(io)io.disconnect();
+  io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.08});
+  $$('.reveal').forEach(el=>io.observe(el));
+}
+const cio=new IntersectionObserver(es=>es.forEach(e=>{ if(!e.isIntersecting)return; cio.unobserve(e.target);
+  const end=+e.target.dataset.count, t0=performance.now();
+  (function tick(t){const p=Math.min(1,(t-t0)/1100); e.target.textContent=Math.round(end*(0.22+0.78*p*p*(3-2*p)*0+ (1-Math.pow(1-p,3)) )).toString(); if(p<1)requestAnimationFrame(tick); else e.target.textContent=end;})(t0);
+}),{threshold:.4});
+$$('[data-count]').forEach(el=>cio.observe(el));
+/* ---------- hero typing ---------- */
+const SNIPS=[
+ {f:'hello.py',code:'print("你好，Python")\nprint(19.82 + 14.24)',out:['你好，Python','34.06']},
+ {f:'variables.py',code:'lunch = 19.82\ndinner = 14.24\ntotal = lunch + dinner\nprint(total)',out:['34.06']},
+ {f:'loop.py',code:'total = 0\nfor i in range(1, 6):\n    total = total + i\nprint(total)',out:['15']}];
+let snipI=0;
+async function heroLoop(){
+  const codeEl=$('#heroCode'), outEl=$('#heroOut'), fileEl=$('#heroFile');
+  const wait=ms=>new Promise(r=>setTimeout(r,ms));
+  while(true){
+    const s=SNIPS[snipI%SNIPS.length]; snipI++;
+    fileEl.textContent=s.f; outEl.innerHTML=''; codeEl.innerHTML='';
+    if(reduced){ codeEl.innerHTML=hl(s.code); outEl.innerHTML=s.out.map(o=>esc(o)).join('<br>'); await wait(4000); continue; }
+    const plain=s.code; let buf='';
+    codeEl.innerHTML='<span class="caret"></span>';
+    for(const ch of plain){ buf+=ch; codeEl.innerHTML=esc(buf)+'<span class="caret"></span>'; await wait(ch==='\n'?130:26); }
+    codeEl.innerHTML=hl(plain); await wait(420);
+    for(const line of s.out){ outEl.innerHTML+= (outEl.innerHTML?'<br>':'')+esc(line); await wait(300); }
+    await wait(3400);
+  }
+}
+/* ---------- lesson sheet ---------- */
+let cur=-1, quizSel=[], quizPos=0, quizLock=false;
+function openLesson(i){
+  cur=i; quizSel=LESSONS[i].quiz.map(()=>null); quizPos=0; quizLock=false;
+  const l=LESSONS[i], st=STAGES[l.stage];
+  $('#sheet').innerHTML=`
+   <div class="sh-head"><div><div class="stg">阶段${st.medal} · ${st.name} — LESSON ${l.gi+1} / ${LESSONS.length}</div>
+   <h3>${l.title}</h3></div><button class="x" id="shClose" aria-label="关闭">✕</button></div>
+   <div class="sec-t">讲解</div>
+   <div class="intro">${l.intro}</div>
+   <div class="tip"><b>注意 ·</b> ${l.tip}</div>
+   <div class="sec-t">代码演示</div>
+   <div class="codebox"><div class="cb-bar"><span class="dot" style="background:#ff5f57"></span><span class="dot" style="background:#febc2e"></span><span class="dot" style="background:#28c840"></span><span class="fn">demo.py</span><button class="runbtn" id="runBtn">▶ 运行演示</button></div>
+   <pre id="demoCode">${hl(l.code)}</pre>
+   <div class="console" id="demoCon"><div class="hd">运行结果</div><div id="demoOut"></div></div></div>
+   <div class="sec-t">互动练习 · ${l.quiz.length} 题</div>
+   <div id="quizBox"></div>
+   <div class="sh-nav">
+     <button class="btn btn-ghost" id="prevBtn" ${i===0?'disabled style="opacity:.4"':''}>← 上一课</button>
+     <button class="btn btn-ghost" id="nextBtn" ${i===LESSONS.length-1?'disabled style="opacity:.4"':''}>下一课 →</button>
+     <span style="flex:1"></span>
+     <span class="score" id="doneState">${doneSet.has(l.gi)?'✓ 本课已完成':'完成练习后点亮本课'}</span>
+   </div>`;
+  $('#overlay').classList.add('open'); document.body.style.overflow='hidden';
+  $('#sheet').scrollTop=0;
+  $('#shClose').onclick=closeLesson;
+  $('#prevBtn').onclick=()=>{if(cur>0)openLesson(cur-1)};
+  $('#nextBtn').onclick=()=>{if(cur<LESSONS.length-1)openLesson(cur+1)};
+  $('#runBtn').onclick=runDemo;
+  renderQuiz();
+}
+function closeLesson(){ $('#overlay').classList.remove('open'); document.body.style.overflow=''; renderRoute(); }
+$('#overlay').addEventListener('click',e=>{ if(e.target.id==='overlay') closeLesson(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&$('#overlay').classList.contains('open')) closeLesson(); });
+async function runDemo(){
+  const l=LESSONS[cur], btn=$('#runBtn'), pre=$('#demoCode'), con=$('#demoCon'), out=$('#demoOut');
+  btn.disabled=true; btn.textContent='运行中…'; con.classList.remove('show'); out.innerHTML='';
+  const wait=ms=>new Promise(r=>setTimeout(r,ms));
+  if(reduced){ pre.innerHTML=hl(l.code); }
+  else{ let buf=''; for(const ch of l.code){ buf+=ch; pre.textContent=buf; await wait(ch==='\n'?90:14);} pre.innerHTML=hl(l.code); }
+  await wait(380); con.classList.add('show');
+  for(const line of l.out){ out.innerHTML+=(out.innerHTML?'<br>':'')+esc(line); await wait(240); }
+  btn.disabled=false; btn.textContent='↻ 再跑一次';
+}
+function renderQuiz(){
+  const l=LESSONS[cur], box=$('#quizBox');
+  const answered=quizSel.filter(x=>x!==null).length;
+  if(answered===l.quiz.length){ renderQuizResult(); return; }
+  const q=l.quiz[quizPos], sel=quizSel[quizPos];
+  box.innerHTML=`<div class="qdots">${l.quiz.map((_,k)=>`<i class="${quizSel[k]===null?(k===quizPos?'now':''):quizSel[k]===l.quiz[k].ans?'ok':'bad'}"></i>`).join('')}</div>
+   <div class="quiz-q">第 ${quizPos+1} 题 · ${q.q}</div>
+   <div class="opts">${q.opts.map((o,k)=>{let cls=''; if(sel!==null){ if(k===q.ans)cls='right'; else if(k===sel)cls='wrong'; }
+     return `<button class="opt ${cls}" data-k="${k}" ${sel!==null?'disabled':''}>${esc(o)}</button>`}).join('')}</div>
+   <div class="why ${sel!==null?'show':''}">${sel!==null?('<b>'+(sel===q.ans?'✓ 答对了。':'✗ 答错了。')+'</b> '+q.why):''}</div>
+   <div class="quiz-foot">${sel!==null?`<button class="btn btn-gold" id="qNext" style="padding:11px 26px;font-size:14px">${quizPos<l.quiz.length-1?'下一题 →':'查看结果'}</button>`:''}
+   <span class="score">已答 ${answered} / ${l.quiz.length}</span></div>`;
+  box.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{ if(quizLock)return; quizLock=true; quizSel[quizPos]=+b.dataset.k; setTimeout(()=>{quizLock=false; renderQuiz();},60); });
+  const nx=$('#qNext'); if(nx) nx.onclick=()=>{ if(quizPos<l.quiz.length-1){quizPos++; renderQuiz();} else renderQuizResult(); };
+}
+function renderQuizResult(){
+  const l=LESSONS[cur], score=quizSel.reduce((a,s,k)=>a+(s===l.quiz[k].ans?1:0),0);
+  const prevBest=store.best[l.gi]||0; if(score>prevBest){store.best[l.gi]=score; save();}
+  $('#quizBox').innerHTML=`<div class="qdots">${l.quiz.map((q,k)=>`<i class="${quizSel[k]===q.ans?'ok':'bad'}"></i>`).join('')}</div>
+   <div class="quiz-q">${score===l.quiz.length?'全对，漂亮！':score===l.quiz.length-1?'就差一题，全对在望。':'这一课先记个大概，错题讲解都在上面。'}</div>
+   <div class="why show">本课得分 <b>${score} / ${l.quiz.length}</b>${prevBest?` · 历史最佳 ${Math.max(prevBest,score)} / ${l.quiz.length}`:''}。${score<l.quiz.length?'点「再练一次」可以重做错题思路，讲解会再看一遍。':'点下面按钮点亮这一课，金线会往前走。'}</div>
+   <div class="quiz-foot">
+     <button class="btn btn-ghost" id="qRetry" style="padding:11px 24px;font-size:14px">再练一次</button>
+     ${doneSet.has(l.gi)?'<span class="score">✓ 本课已完成</span>':`<button class="btn btn-gold" id="qDone" style="padding:11px 26px;font-size:14px">完成本课 ✓</button>`}
+   </div>`;
+  $('#qRetry').onclick=()=>{ quizSel=LESSONS[cur].quiz.map(()=>null); quizPos=0; renderQuiz(); };
+  const dn=$('#qDone'); if(dn) dn.onclick=completeLesson;
+}
+function completeLesson(){
+  const l=LESSONS[cur]; doneSet.add(l.gi); store.done=[...doneSet]; save();
+  $('#doneState').textContent='✓ 本课已完成'; confettiBurst();
+  renderQuizResult(); updateRing();
+  const nx=$('#nextBtn'); if(nx&&cur<LESSONS.length-1){ nx.textContent='下一课 → 已解锁'; }
+  if(doneSet.size===LESSONS.length){ setTimeout(()=>confettiBurst(true),450); }
+}
+/* ---------- confetti ---------- */
+const cv=$('#confetti'), cx=cv.getContext('2d'); let parts=[], rafId=null;
+function sizeCv(){cv.width=innerWidth; cv.height=innerHeight} sizeCv(); addEventListener('resize',sizeCv);
+function confettiBurst(big=false){
+  if(reduced) return;
+  const colors=['#f5c65c','#e3a82b','#f2efe7','#4cc2a6'];
+  const n=big?170:80;
+  for(let k=0;k<n;k++){ parts.push({x:innerWidth/2+(Math.random()-.5)*260, y:innerHeight*0.32, vx:(Math.random()-.5)*(big?13:9), vy:-Math.random()*9-4, g:.28, s:Math.random()*7+4, r:Math.random()*Math.PI, vr:(Math.random()-.5)*.3, c:colors[k%colors.length], life:1, decay:.006+Math.random()*.006}); }
+  if(!rafId) confettiTick();
+}
+function confettiTick(){
+  cx.clearRect(0,0,cv.width,cv.height);
+  parts=parts.filter(p=>p.life>0&&p.y<innerHeight+30);
+  for(const p of parts){ p.x+=p.vx; p.y+=p.vy; p.vy+=p.g; p.r+=p.vr; p.life-=p.decay;
+    cx.save(); cx.translate(p.x,p.y); cx.rotate(p.r); cx.globalAlpha=Math.max(0,p.life); cx.fillStyle=p.c; cx.fillRect(-p.s/2,-p.s/2,p.s,p.s*.62); cx.restore(); }
+  if(parts.length){ rafId=requestAnimationFrame(confettiTick); } else { rafId=null; cx.clearRect(0,0,cv.width,cv.height); }
+}
+/* ---------- misc wiring ---------- */
+$('#ctaStart').onclick=()=>{ const i=firstOpen(); if(doneSet.size===LESSONS.length){ document.getElementById('route').scrollIntoView({behavior:'smooth'}); } else openLesson(i); };
+$('#ctaRoute').onclick=()=>document.getElementById('route').scrollIntoView({behavior:'smooth'});
+$('#searchBox').addEventListener('input',e=>{
+  const kw=e.target.value.trim(); let any=false;
+  $$('.stage').forEach(sec=>{ let vis=false;
+    sec.querySelectorAll('.lsn').forEach(n=>{ const hit=!kw||n.dataset.title.includes(kw); n.style.display=hit?'':'none'; if(hit){vis=true;any=true;} });
+    sec.style.display=vis?'':'none'; });
+  $('#emptyMsg').style.display=any?'none':'block';
+});
+renderRoute(); heroLoop();
+</script>
 </body>
 </html>
