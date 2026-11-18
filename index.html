@@ -226,6 +226,14 @@ select.ai-in option{background:#12151d}
 .ai-qrow input{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:11px;color:var(--txt);font-size:14.5px;padding:12px 15px;outline:none;font-family:var(--sans)}
 .ai-qrow input:focus{border-color:rgba(227,168,43,.55)}
 .ai-reply{display:none;margin-top:16px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-left:3px solid var(--teal);border-radius:0 12px 12px 0;padding:15px 18px;font-size:14.5px;line-height:1.9;color:#dfe4da;white-space:pre-wrap;word-break:break-word}
+.ai-thread{max-height:400px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:6px 2px}
+.ai-thread::-webkit-scrollbar{width:5px}
+.ai-thread::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:3px}
+.msg{max-width:88%;padding:11px 15px;border-radius:14px;font-size:14.5px;line-height:1.85;white-space:pre-wrap;word-break:break-word}
+.msg.a{align-self:flex-start;background:rgba(255,255,255,.05);border:1px solid var(--line);border-bottom-left-radius:5px;color:#dfe4da}
+.msg.u{align-self:flex-end;background:rgba(227,168,43,.15);border:1px solid rgba(227,168,43,.38);border-bottom-right-radius:5px;color:#f3e5c3}
+.msg code{font-family:var(--mono);background:rgba(255,255,255,.08);padding:1px 6px;border-radius:5px;font-size:13px}
+.msg.err{color:#ffb4a6;border-color:rgba(229,96,79,.5)}
 .ai-reply.show{display:block}
 .ai-reply code{font-family:var(--mono);background:rgba(255,255,255,.08);padding:1px 6px;border-radius:5px;font-size:13px}
 @media(prefers-reduced-motion:reduce){
@@ -574,35 +582,53 @@ $('#aiSave').onclick=()=>{
   setTimeout(closeAiModal,650);
 };
 $('#aiClear').onclick=()=>{ localStorage.removeItem(AI_LS); aiCfg=null; $('#aiKey').value=''; $('#aiState').textContent='已清除'; renderAiBox(); };
+const CHATS_LS='hobart-py-ai-chats';
+let aiChats={}; try{ aiChats=JSON.parse(localStorage.getItem(CHATS_LS)||'{}'); }catch(e){ aiChats={}; }
+function saveChats(){ try{ localStorage.setItem(CHATS_LS, JSON.stringify(aiChats)); }catch(e){} }
+function chatOf(gi){ if(!aiChats[gi]) aiChats[gi]=[]; return aiChats[gi]; }
+function bubbleHtml(m){ return m.role==='user' ? `<div class="msg u">${esc(m.content)}</div>` : `<div class="msg a">${fmtAi(m.content)}</div>`; }
 function renderAiBox(){
   const box=$('#aiBox'); if(!box) return;
   if(!aiReady()){
-    box.innerHTML=`<div class="why show">这一课想问更深、或者想要个生活化的讲解？接入你自己的 AI 就能直接问它。<br>本站不提供 AI 服务，也拿不到你的 Key——Key 只存在你自己的浏览器里，费用算你自己的账号。</div>
+    box.innerHTML=`<div class="why show">这一课想问更深、或者想要个生活化的讲解？接入你自己的 AI 就能直接问它，还能连续追问。<br>本站不提供 AI 服务，也拿不到你的 Key——Key 只存在你自己的浏览器里，费用算你自己的账号。</div>
     <div class="quiz-foot"><button class="btn btn-gold" id="aiOpen2" style="padding:11px 26px;font-size:14px">接入我的 AI</button></div>`;
     $('#aiOpen2').onclick=openAiModal; return;
   }
-  box.innerHTML=`<div class="ai-qrow"><input id="aiQ" type="text" placeholder="问这一课的任何问题，例如：为什么下标从 0 开始？"><button class="btn btn-gold" id="aiAsk" style="padding:11px 22px;font-size:14px">提问</button></div>
-  <div class="quiz-foot" style="margin-top:10px"><button class="btn btn-ghost" id="aiExplain" style="padding:9px 20px;font-size:13px">让 AI 讲解这一课</button><span class="score">当前模型 · ${esc(aiCfg.model)}</span></div>
-  <div class="ai-reply" id="aiReply"></div>`;
-  $('#aiAsk').onclick=()=>askAI($('#aiQ').value.trim());
-  $('#aiQ').addEventListener('keydown',e=>{ if(e.key==='Enter') askAI(e.target.value.trim()); });
-  $('#aiExplain').onclick=()=>askAI('');
+  const l=LESSONS[cur], chat=chatOf(l.gi);
+  box.innerHTML=`
+  <div class="ai-thread" id="aiThread">${chat.length? chat.map(m=>bubbleHtml(m)).join('') : '<div class="msg a">我是这一课的 AI 讲解员，可以连续对话：先让我讲解这一课，再接着追问「为什么」就行。</div>'}</div>
+  <div class="ai-qrow" style="margin-top:12px"><input id="aiQ" type="text" placeholder="接着问…（Enter 发送）"><button class="btn btn-gold" id="aiAsk" style="padding:11px 22px;font-size:14px">发送</button></div>
+  <div class="quiz-foot" style="margin-top:10px"><button class="btn btn-ghost" id="aiExplain" style="padding:9px 20px;font-size:13px">让 AI 讲解这一课</button><button class="btn btn-ghost" id="aiReset" style="padding:9px 20px;font-size:13px">清空对话</button><span class="score">当前模型 · ${esc(aiCfg.model)} · 对话保存在本机</span></div>`;
+  const th=$('#aiThread'); th.scrollTop=th.scrollHeight;
+  const send=()=>{ const v=$('#aiQ').value.trim(); if(v){ $('#aiQ').value=''; askAI(v); } };
+  $('#aiAsk').onclick=send;
+  $('#aiQ').addEventListener('keydown',e=>{ if(e.key==='Enter') send(); });
+  $('#aiExplain').onclick=()=>askAI('请讲解这一课的核心概念，配一个生活化的例子，再提醒一个最容易踩的坑。');
+  $('#aiReset').onclick=()=>{ aiChats[l.gi]=[]; saveChats(); renderAiBox(); };
 }
 function fmtAi(t){ return esc(t).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/`([^`\n]+)`/g,'<code>$1</code>'); }
 async function askAI(q){
-  const l=LESSONS[cur], rep=$('#aiReply'), btn=$('#aiAsk');
-  if(!q) q='请讲解这一课的核心概念，配一个生活化的例子，再提醒一个最容易踩的坑。';
-  rep.classList.add('show'); rep.textContent='AI 思考中…'; if(btn) btn.disabled=true;
-  const sys='你是一位耐心的 Python 编程老师，正在辅导一位会计专业大一学生自学 Python。用简体中文、通俗易懂地讲解，多用生活例子（记账、金额、问卷）。如果学生问的是练习题，不要直接给答案，只给提示和思路，引导他自己想出来。回答控制在 300 字以内，分段清晰。';
-  const ctx=`当前课程：第 ${l.gi+1} 课《${l.title}》\n讲解：${l.intro}\n注意点：${l.tip}\n示例代码：\n${l.code}\n运行结果：${l.out.join(' / ')}\n\n学生的问题：${q}`;
+  const l=LESSONS[cur], chat=chatOf(l.gi), th=$('#aiThread'), btn=$('#aiAsk');
+  chat.push({role:'user', content:q}); if(chat.length>40) chat.splice(0, chat.length-40); saveChats();
+  th.insertAdjacentHTML('beforeend', bubbleHtml({role:'user',content:q})+'<div class="msg a" id="aiTyping">思考中…</div>');
+  th.scrollTop=th.scrollHeight; if(btn) btn.disabled=true;
+  const sys='你是一位耐心的 Python 编程老师，正在辅导一位会计专业大一学生自学 Python。用简体中文、通俗易懂地讲解，多用生活例子（记账、金额、问卷）。如果学生问的是练习题，不要直接给答案，只给提示和思路，引导他自己想出来。结合之前的对话回答追问。回答控制在 300 字以内，分段清晰。';
+  const ctx=`当前课程：第 ${l.gi+1} 课《${l.title}》\n讲解：${l.intro}\n注意点：${l.tip}\n示例代码：\n${l.code}\n运行结果：${l.out.join(' / ')}`;
+  const hist=chat.slice(-12);
+  const msgs=[{role:'system',content:sys}];
+  hist.forEach((m,i)=>{ msgs.push({role:m.role, content:(i===0&&m.role==='user')? ctx+'\n\n学生的问题：'+m.content : m.content}); });
+  const typing=$('#aiTyping');
   try{
     const r=await fetch(aiCfg.base+'/chat/completions',{method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+aiCfg.key},
-      body:JSON.stringify({model:aiCfg.model,temperature:0.7,messages:[{role:'system',content:sys},{role:'user',content:ctx}]})});
+      body:JSON.stringify({model:aiCfg.model,temperature:0.7,messages:msgs})});
     const j=await r.json().catch(()=>null);
-    if(!r.ok){ rep.textContent='请求失败：'+((j&&j.error&&j.error.message)||('HTTP '+r.status))+'。请检查接口地址、Key 和模型名。'; }
-    else{ const t=j&&j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content; rep.innerHTML=t?fmtAi(t):'接口没有返回内容，换个问题再试试。'; }
-  }catch(err){ rep.textContent='请求没有发出去：可能是网络问题，或者该接口不允许浏览器直接调用（跨域限制）。可以换一个支持浏览器调用的接口试试。'; }
+    if(!r.ok){ typing.classList.add('err'); typing.textContent='请求失败：'+((j&&j.error&&j.error.message)||('HTTP '+r.status))+'。请检查接口地址、Key 和模型名。这条不计入对话，可以直接重发。'; chat.pop(); saveChats(); }
+    else{ const t=j&&j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content;
+      if(t){ chat.push({role:'assistant', content:t}); saveChats(); typing.outerHTML=bubbleHtml({role:'assistant',content:t}); }
+      else typing.textContent='接口没有返回内容，换个问法再试试。'; }
+  }catch(err){ typing.classList.add('err'); typing.textContent='请求没有发出去：可能是网络问题，或者该接口不允许浏览器直接调用（跨域限制）。这条不计入对话，可以直接重发。'; chat.pop(); saveChats(); }
+  const th2=$('#aiThread'); if(th2) th2.scrollTop=th2.scrollHeight;
   if(btn) btn.disabled=false;
 }
 /* ---------- hands-on judge: real Python in the browser (Pyodide) ---------- */
@@ -639,6 +665,18 @@ const ERR_ZH={SyntaxError:'语法错误——多半是冒号、引号或括号�
 function errLineOf(s){ const m=[...String(s).matchAll(/line (\d+)/g)]; return m.length?+m[m.length-1][1]:0; }
 const ZHMAP={'學':'学','習':'习','優':'优','圖':'图','總':'总','貴':'贵','筆':'笔','項':'项','滿':'满','數':'数','據':'据','讀':'读','寫':'写','檔':'档','錯':'错','麼':'么','這':'这','裡':'里','開':'开','點':'点','時':'时','長':'长','個':'个','們':'们','為':'为','應':'应','該':'该','會':'会','讓':'让','變':'变','環':'环','節':'节','錄':'录','統':'统','計':'计','價':'价','錢':'钱','買':'买','賣':'卖','飯':'饭','麵':'面','乾':'干','後':'后','裡':'里','麼':'么','過':'过','還':'还','進':'进','遠':'远','運':'运','動':'动','場':'场','國':'国','現':'现','實':'实','際':'际','發':'发','現':'现','將':'将','對':'对','來':'来','說':'说','請':'请','謝':'谢','歡':'欢','迎':'迎','麼':'么'};
 function normLine(s){ return String(s).replace(/[學學習優圖總貴筆項滿數據讀寫檔錯麼這裡開點時長個們為應該會讓變環節錄統計價錢買賣飯麵乾後過還進遠運動場國現實際發現將對來說請謝歡迎]/g, ch=>ZHMAP[ch]||ch); }
+const PUNCT={'，':',','。':'.','：':':','！':'!','？':'?','；':';','（':'(','）':')','“':'"','”':'"','‘':"'",'’':"'",'、':','};
+function normBase(s){ return normLine(s).replace(/[，。：！？；（）“”‘’、]/g, ch=>PUNCT[ch]||ch); }
+/* 输出判定：忽略所有空白、全半角标点、简繁字形差异；数字按数值比（带小容差）。内容本身必须一致。 */
+function judgeEq(e, a){
+  const x=normBase(e).replace(/\s+/g,''), y=normBase(a).replace(/\s+/g,'');
+  if(x===y) return true;
+  const nums=s=>[...s.matchAll(/-?\d+\.?\d*/g)].map(m=>parseFloat(m[0]));
+  const skel=s=>s.replace(/-?\d+\.?\d*/g,'#');
+  if(skel(x)!==skel(y)) return false;
+  const nx=nums(x), ny=nums(y); if(nx.length!==ny.length) return false;
+  return nx.every((v,i)=>Math.abs(v-ny[i])<=Math.max(1e-9, Math.abs(v)*1e-6));
+}
 function renderCoding(){
   const box=$('#codeBox'); if(!box) return; const l=LESSONS[cur], c=l.coding; if(!c){ box.innerHTML=''; return; }
   const doneC=store.codeDone.includes(l.gi);
@@ -682,7 +720,7 @@ async function judgeCode(syncGutter){
   while(act.length&&act[act.length-1]==='') act.pop();
   const exp=c.expected.map(s=>String(s).replace(/\s+$/,''));
   let firstBad=-1; const max=Math.max(exp.length, act.length), rows=[];
-  for(let i=0;i<max;i++){ const e=exp[i], a=act[i]; const ok=e!==undefined&&a!==undefined&&normLine(e)===normLine(a); if(!ok&&firstBad<0) firstBad=i; rows.push({e,a,ok}); }
+  for(let i=0;i<max;i++){ const e=exp[i], a=act[i]; const ok=e!==undefined&&a!==undefined&&judgeEq(e,a); if(!ok&&firstBad<0) firstBad=i; rows.push({e,a,ok}); }
   let fileOk=true; if(c.checkFile){ fileOk=!!res.fileExists; }
   if(firstBad<0&&fileOk){
     if(!store.codeDone.includes(l.gi)){ store.codeDone.push(l.gi); save(); }
