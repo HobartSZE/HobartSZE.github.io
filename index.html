@@ -167,6 +167,29 @@ footer b{color:var(--muted)}
   .chip{display:none}
   .hero{padding-top:120px}
 }
+/* ---------- polish: scroll progress, hero glow, back-to-top ---------- */
+#scrollProg{position:fixed;top:0;left:0;height:2.5px;width:0;background:linear-gradient(90deg,var(--gold),var(--gold2));z-index:60;box-shadow:0 0 12px rgba(227,168,43,.7);transition:width .12s linear}
+.hero-glow{position:absolute;width:560px;height:560px;border-radius:50%;pointer-events:none;background:radial-gradient(circle,rgba(245,198,92,.09),transparent 62%);transform:translate(-50%,-50%);left:70%;top:24%;transition:left .5s ease-out,top .5s ease-out;z-index:-1}
+#toTop{position:fixed;right:22px;bottom:22px;z-index:70;width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:rgba(13,16,22,.88);color:var(--gold2);font-size:19px;cursor:pointer;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;backdrop-filter:blur(6px)}
+#toTop.show{opacity:1;pointer-events:auto}
+#toTop:hover{transform:translateY(-3px)}
+.medal::after{content:"";position:absolute;inset:0;border-radius:50%;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.5) 48%,transparent 62%);background-size:250% 100%;background-position:120% 0;transition:background-position .8s ease}
+.stage-head:hover .medal::after{background-position:-60% 0}
+/* ---------- AI settings & tutor ---------- */
+.aimodal{position:fixed;inset:0;z-index:90;background:rgba(4,5,8,.72);backdrop-filter:blur(8px);opacity:0;pointer-events:none;transition:opacity .3s}
+.aimodal.open{opacity:1;pointer-events:auto}
+.aibox{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(560px,94vw);max-height:90vh;overflow-y:auto;background:#0d1017;border:1px solid var(--line);border-radius:22px;padding:30px clamp(20px,4vw,36px) 34px;box-shadow:0 50px 120px rgba(0,0,0,.6)}
+.ai-note{color:var(--muted);font-size:13.5px;line-height:1.85;margin-top:14px}
+.ai-lab{display:block;font-size:12px;letter-spacing:.14em;color:var(--muted);margin:18px 0 7px}
+.ai-in{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:11px;color:var(--txt);font-size:14.5px;padding:12px 15px;outline:none;font-family:var(--sans)}
+.ai-in:focus{border-color:rgba(227,168,43,.55)}
+select.ai-in option{background:#12151d}
+.ai-qrow{display:flex;gap:10px;margin-top:4px}
+.ai-qrow input{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:11px;color:var(--txt);font-size:14.5px;padding:12px 15px;outline:none;font-family:var(--sans)}
+.ai-qrow input:focus{border-color:rgba(227,168,43,.55)}
+.ai-reply{display:none;margin-top:16px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-left:3px solid var(--teal);border-radius:0 12px 12px 0;padding:15px 18px;font-size:14.5px;line-height:1.9;color:#dfe4da;white-space:pre-wrap;word-break:break-word}
+.ai-reply.show{display:block}
+.ai-reply code{font-family:var(--mono);background:rgba(255,255,255,.08);padding:1px 6px;border-radius:5px;font-size:13px}
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.001s!important;transition-duration:.001s!important}
   html{scroll-behavior:auto}
@@ -176,9 +199,11 @@ footer b{color:var(--muted)}
 <body>
 <div class="aurora"><i></i><i></i><i></i></div>
 <div class="grain"></div>
+<div id="scrollProg"></div>
 <nav><div class="nav-in">
   <div class="logo">HOBART <b>SZE</b> · PYTHON</div>
   <div class="sp"></div>
+  <button class="btn btn-ghost" id="aiBtn" style="padding:8px 18px;font-size:13px">接入我的 AI</button>
   <div class="ringwrap">
     <svg class="ring" width="34" height="34" viewBox="0 0 34 34"><circle class="bgc" cx="17" cy="17" r="14.5" fill="none" stroke-width="3.4"/><circle class="fgc" id="ringFg" cx="17" cy="17" r="14.5" fill="none" stroke-width="3.4" stroke-linecap="round" stroke-dasharray="91.1" stroke-dashoffset="91.1"/></svg>
     <span id="ringTxt">已完成 0 / 30 课</span>
@@ -186,6 +211,7 @@ footer b{color:var(--muted)}
 </div></nav>
 
 <header class="hero">
+  <div class="hero-glow" id="heroGlow"></div>
   <div class="kicker">Python Self-Study · 30 Lessons</div>
   <h1>把 Python<br>一课一课<span class="grad">走完</span>。</h1>
   <p class="sub">从第一行 print，到亲手做出一份账本报告——30 课、90 道互动练习，每课都有会动的代码演示。进度保存在这台设备上，随时回来接着走。</p>
@@ -225,7 +251,25 @@ footer b{color:var(--muted)}
   本站由 GitHub Pages 托管，学习进度只保存在你这台设备的浏览器里，不上传任何数据。
 </footer>
 
+<div class="aimodal" id="aiModal"><div class="aibox">
+  <div class="sh-head"><div><div class="stg">BRING YOUR OWN AI</div><h3 style="font-family:var(--serif);font-weight:900;font-size:24px;margin-top:6px">接入你自己的 AI</h3></div><button class="x" id="aiClose" aria-label="关闭">✕</button></div>
+  <p class="ai-note">填入你自己的 AI 接口和 API Key，就能在每一课里向 AI 提问、要讲解。Key 只保存在你这台设备的浏览器里，本站没有任何服务器，拿不到你的 Key；调用产生的费用算在你自己的账号上。</p>
+  <label class="ai-lab">接口预设</label>
+  <select id="aiPreset" class="ai-in"></select>
+  <label class="ai-lab">接口地址（Base URL）</label>
+  <input id="aiBase" class="ai-in" type="text" placeholder="https://api.openai.com/v1" autocomplete="off">
+  <label class="ai-lab">API Key</label>
+  <input id="aiKey" class="ai-in" type="password" placeholder="sk-…" autocomplete="off">
+  <label class="ai-lab">模型</label>
+  <input id="aiModel" class="ai-in" type="text" placeholder="例如 gpt-4o-mini 或 deepseek-chat" autocomplete="off">
+  <div class="quiz-foot" style="margin-top:20px">
+    <button class="btn btn-gold" id="aiSave" style="padding:11px 26px;font-size:14px">保存</button>
+    <button class="btn btn-ghost" id="aiClear" style="padding:11px 22px;font-size:14px">清除 Key</button>
+    <span class="score" id="aiState"></span>
+  </div>
+</div></div>
 <div class="overlay" id="overlay"><div class="sheet" id="sheet"></div></div>
+<button id="toTop" aria-label="回到顶部">↑</button>
 <canvas id="confetti"></canvas>
 <script>
 const STAGES = [{"name": "地基", "sub": "先把最核心的语法打牢", "medal": "一"}, {"name": "工具", "sub": "让程序能存数据、读文件、处理真实文本", "medal": "二"}, {"name": "会计应用", "sub": "用 pandas 把账本数据玩起来", "medal": "三"}];
@@ -255,9 +299,9 @@ function renderRoute(){
     const dn=items.filter(x=>doneSet.has(x.l.gi)).length;
     const sec=document.createElement('section'); sec.className='stage reveal';
     sec.innerHTML=`<div class="stage-head"><div class="medal">${st.medal}</div><div><h3>阶段${st.medal} · ${st.name}</h3><div class="ss">${st.sub}</div></div><div class="stage-bar"><i style="width:${dn/items.length*100}%"></i></div><div class="stage-pct">${dn}/${items.length}</div></div>
-    <div class="lessons"><div class="fill"></div>${items.map(({l,i})=>{
+    <div class="lessons"><div class="fill"></div>${items.map(({l,i},k)=>{
       const d=doneSet.has(l.gi), cur=l.gi===firstOpen();
-      return `<div class="lsn ${d?'done':''} ${cur&&!d?'current':''}" data-title="${l.title}">
+      return `<div class="lsn reveal ${d?'done':''} ${cur&&!d?'current':''}" style="transition-delay:${(k%6)*55}ms" data-title="${l.title}">
         <div class="node">${d?'✓':l.gi+1}</div>
         <div class="card" data-open="${i}" tabindex="0" role="button" aria-label="打开第 ${l.gi+1} 课">
           <div class="top"><h4>第 ${l.gi+1} 课 · ${l.title}</h4><span class="tag ${d?'done':cur?'cur':''}">${d?'已完成':cur?'当前课程':'未开始'}</span><span class="meta">${l.mins} 分钟 · ${l.quiz.length} 题</span></div>
@@ -336,6 +380,8 @@ function openLesson(i){
    <div class="console" id="demoCon"><div class="hd">运行结果</div><div id="demoOut"></div></div></div>
    <div class="sec-t">互动练习 · ${l.quiz.length} 题</div>
    <div id="quizBox"></div>
+   <div class="sec-t">AI 讲解 · 接入自己的 AI</div>
+   <div id="aiBox"></div>
    <div class="sh-nav">
      <button class="btn btn-ghost" id="prevBtn" ${i===0?'disabled style="opacity:.4"':''}>← 上一课</button>
      <button class="btn btn-ghost" id="nextBtn" ${i===LESSONS.length-1?'disabled style="opacity:.4"':''}>下一课 →</button>
@@ -348,7 +394,7 @@ function openLesson(i){
   $('#prevBtn').onclick=()=>{if(cur>0)openLesson(cur-1)};
   $('#nextBtn').onclick=()=>{if(cur<LESSONS.length-1)openLesson(cur+1)};
   $('#runBtn').onclick=runDemo;
-  renderQuiz();
+  renderQuiz(); renderAiBox();
 }
 function closeLesson(){ $('#overlay').classList.remove('open'); document.body.style.overflow=''; renderRoute(); }
 $('#overlay').addEventListener('click',e=>{ if(e.target.id==='overlay') closeLesson(); });
@@ -425,6 +471,74 @@ $('#searchBox').addEventListener('input',e=>{
     sec.style.display=vis?'':'none'; });
   $('#emptyMsg').style.display=any?'none':'block';
 });
+/* ---------- AI tutor (bring your own key) ---------- */
+const AI_LS='hobart-py-ai';
+const PRESETS=[['OpenAI','https://api.openai.com/v1','gpt-4o-mini'],['DeepSeek','https://api.deepseek.com/v1','deepseek-chat'],['通义千问（兼容模式）','https://dashscope.aliyuncs.com/compatible-mode/v1','qwen-plus'],['硅基流动','https://api.siliconflow.com/v1','deepseek-ai/DeepSeek-V3'],['自定义','','']];
+let aiCfg=null; try{ aiCfg=JSON.parse(localStorage.getItem(AI_LS)||'null'); }catch(e){ aiCfg=null; }
+function aiReady(){ return !!(aiCfg&&aiCfg.key&&aiCfg.base&&aiCfg.model); }
+function openAiModal(){
+  const sel=$('#aiPreset'); sel.innerHTML=PRESETS.map((p,i)=>`<option value="${i}">${p[0]}</option>`).join('');
+  if(aiCfg){ $('#aiBase').value=aiCfg.base||''; $('#aiKey').value=aiCfg.key||''; $('#aiModel').value=aiCfg.model||'';
+    const pi=PRESETS.findIndex(p=>p[1]&&p[1]===aiCfg.base); sel.value=pi>=0?pi:PRESETS.length-1; }
+  else{ sel.value=0; $('#aiBase').value=PRESETS[0][1]; $('#aiModel').value=PRESETS[0][2]; $('#aiKey').value=''; }
+  $('#aiState').textContent=aiReady()?('已接入 · '+aiCfg.model):'尚未保存 Key';
+  $('#aiModal').classList.add('open');
+}
+function closeAiModal(){ $('#aiModal').classList.remove('open'); }
+$('#aiBtn').onclick=openAiModal;
+$('#aiClose').onclick=closeAiModal;
+$('#aiModal').addEventListener('click',e=>{ if(e.target.id==='aiModal') closeAiModal(); });
+$('#aiPreset').addEventListener('change',e=>{ const p=PRESETS[+e.target.value]; if(p[1]){ $('#aiBase').value=p[1]; } if(p[2]){ $('#aiModel').value=p[2]; } });
+$('#aiSave').onclick=()=>{
+  aiCfg={base:$('#aiBase').value.trim().replace(/\/+$/,''), key:$('#aiKey').value.trim(), model:$('#aiModel').value.trim()};
+  if(!aiReady()){ $('#aiState').textContent='三项都要填：接口地址、Key、模型'; return; }
+  localStorage.setItem(AI_LS,JSON.stringify(aiCfg));
+  $('#aiState').textContent='已保存 · '+aiCfg.model; renderAiBox();
+  setTimeout(closeAiModal,650);
+};
+$('#aiClear').onclick=()=>{ localStorage.removeItem(AI_LS); aiCfg=null; $('#aiKey').value=''; $('#aiState').textContent='已清除'; renderAiBox(); };
+function renderAiBox(){
+  const box=$('#aiBox'); if(!box) return;
+  if(!aiReady()){
+    box.innerHTML=`<div class="why show">这一课想问更深、或者想要个生活化的讲解？接入你自己的 AI 就能直接问它。<br>本站不提供 AI 服务，也拿不到你的 Key——Key 只存在你自己的浏览器里，费用算你自己的账号。</div>
+    <div class="quiz-foot"><button class="btn btn-gold" id="aiOpen2" style="padding:11px 26px;font-size:14px">接入我的 AI</button></div>`;
+    $('#aiOpen2').onclick=openAiModal; return;
+  }
+  box.innerHTML=`<div class="ai-qrow"><input id="aiQ" type="text" placeholder="问这一课的任何问题，例如：为什么下标从 0 开始？"><button class="btn btn-gold" id="aiAsk" style="padding:11px 22px;font-size:14px">提问</button></div>
+  <div class="quiz-foot" style="margin-top:10px"><button class="btn btn-ghost" id="aiExplain" style="padding:9px 20px;font-size:13px">让 AI 讲解这一课</button><span class="score">当前模型 · ${esc(aiCfg.model)}</span></div>
+  <div class="ai-reply" id="aiReply"></div>`;
+  $('#aiAsk').onclick=()=>askAI($('#aiQ').value.trim());
+  $('#aiQ').addEventListener('keydown',e=>{ if(e.key==='Enter') askAI(e.target.value.trim()); });
+  $('#aiExplain').onclick=()=>askAI('');
+}
+function fmtAi(t){ return esc(t).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/`([^`\n]+)`/g,'<code>$1</code>'); }
+async function askAI(q){
+  const l=LESSONS[cur], rep=$('#aiReply'), btn=$('#aiAsk');
+  if(!q) q='请讲解这一课的核心概念，配一个生活化的例子，再提醒一个最容易踩的坑。';
+  rep.classList.add('show'); rep.textContent='AI 思考中…'; if(btn) btn.disabled=true;
+  const sys='你是一位耐心的 Python 编程老师，正在辅导一位会计专业大一学生自学 Python。用简体中文、通俗易懂地讲解，多用生活例子（记账、金额、问卷）。如果学生问的是练习题，不要直接给答案，只给提示和思路，引导他自己想出来。回答控制在 300 字以内，分段清晰。';
+  const ctx=`当前课程：第 ${l.gi+1} 课《${l.title}》\n讲解：${l.intro}\n注意点：${l.tip}\n示例代码：\n${l.code}\n运行结果：${l.out.join(' / ')}\n\n学生的问题：${q}`;
+  try{
+    const r=await fetch(aiCfg.base+'/chat/completions',{method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+aiCfg.key},
+      body:JSON.stringify({model:aiCfg.model,temperature:0.7,messages:[{role:'system',content:sys},{role:'user',content:ctx}]})});
+    const j=await r.json().catch(()=>null);
+    if(!r.ok){ rep.textContent='请求失败：'+((j&&j.error&&j.error.message)||('HTTP '+r.status))+'。请检查接口地址、Key 和模型名。'; }
+    else{ const t=j&&j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content; rep.innerHTML=t?fmtAi(t):'接口没有返回内容，换个问题再试试。'; }
+  }catch(err){ rep.textContent='请求没有发出去：可能是网络问题，或者该接口不允许浏览器直接调用（跨域限制）。可以换一个支持浏览器调用的接口试试。'; }
+  if(btn) btn.disabled=false;
+}
+/* ---------- polish wiring ---------- */
+addEventListener('scroll',()=>{
+  const h=document.documentElement, p=h.scrollTop/(h.scrollHeight-h.clientHeight||1);
+  $('#scrollProg').style.width=(p*100)+'%';
+  $('#toTop').classList.toggle('show',h.scrollTop>700);
+  const ide=$('#heroIde'); if(ide&&h.scrollTop<900&&!reduced) ide.style.transform=`translateY(${h.scrollTop*-0.03}px)`;
+},{passive:true});
+$('#toTop').onclick=()=>scrollTo({top:0,behavior:reduced?'auto':'smooth'});
+$('.hero').addEventListener('mousemove',e=>{ const g=$('#heroGlow'); if(!g)return; const r=$('.hero').getBoundingClientRect();
+  g.style.left=(e.clientX-r.left)+'px'; g.style.top=(e.clientY-r.top)+'px'; });
+document.addEventListener('keydown',e=>{ if(e.key==='/'&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)){ e.preventDefault(); $('#searchBox').focus(); $('#searchBox').scrollIntoView({behavior:'smooth',block:'center'}); } });
 renderRoute(); heroLoop();
 </script>
 </body>
