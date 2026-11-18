@@ -7,6 +7,10 @@
 <meta name="description" content="30 课 Python 自学路线：从 print 到 pandas 账本报告，每课都有代码演示和互动练习。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="preconnect" href="https://cdnjs.cloudflare.com">
+<link rel="preload" as="image" href="https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-blue-marble.jpg">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Noto+Serif+SC:wght@600;900&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -193,7 +197,11 @@ footer b{color:var(--muted)}
 .hero-left .cta{justify-content:flex-start}
 .hero-left .stats{margin-top:40px}
 .globe-wrap{position:relative;width:100%;max-width:500px;margin:0 auto}
+@media(min-width:921px){.globe-wrap{transform:translateY(-16px)}}
 #globeCv{width:100%;aspect-ratio:1;display:block;cursor:grab;touch-action:none}
+.globe-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;letter-spacing:.14em;pointer-events:none;animation:globePulse 1.6s ease-in-out infinite}
+.globe-loading.off{display:none}
+@keyframes globePulse{0%,100%{opacity:.45}50%{opacity:1}}
 #globeCv:active{cursor:grabbing}
 .globe-bar{display:flex;align-items:center;gap:14px;justify-content:center;margin-top:6px;flex-wrap:wrap}
 .globe-bar span{font-size:12.5px;color:var(--muted2)}
@@ -288,6 +296,7 @@ select.ai-in option{background:#12151d}
       </div>
     </div>
     <div class="globe-wrap reveal">
+      <div class="globe-loading" id="globeLoading">地 球 加 载 中</div>
       <canvas id="globeCv"></canvas>
       <div class="globe-bar">
         <button class="btn btn-ghost" id="gestureBtn" style="padding:9px 20px;font-size:13.5px">✋ 开启手势控制</button>
@@ -888,19 +897,20 @@ renderRoute(); heroLoop();
   var sun=new THREE.DirectionalLight(0xffffff,1.15); sun.position.set(5,2,4); scene.add(sun);
   var TEX='https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/textures/planets/';
   var loader=new THREE.TextureLoader(); loader.crossOrigin='anonymous';
-  var earthMat=new THREE.MeshPhongMaterial({ color:0x1a2436,
-    normalMap:loader.load(TEX+'earth_normal_2048.jpg'), normalScale:new THREE.Vector2(0.85,0.85),
-    specularMap:loader.load(TEX+'earth_specular_2048.jpg'), specular:new THREE.Color(0x2a4a66), shininess:14 });
+  var earthMat=new THREE.MeshPhongMaterial({ color:0x16233c, specular:new THREE.Color(0x2a4a66), shininess:14 });
   var earth=new THREE.Mesh(new THREE.SphereGeometry(1,72,72), earthMat);
   group.add(earth);
-  loader.load('https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-blue-marble.jpg',
-    function(t){ earthMat.map=t; earthMat.color.set(0xffffff); earthMat.needsUpdate=true; },
-    undefined,
-    function(){ loader.load(TEX+'earth_atmos_2048.jpg', function(t){ earthMat.map=t; earthMat.color.set(0xffffff); earthMat.needsUpdate=true; }); });
-  loader.load(TEX+'earth_clouds_1024.png', function(t){ var c=new THREE.Mesh(new THREE.SphereGeometry(1.012,48,48), new THREE.MeshLambertMaterial({map:t,transparent:true,opacity:0.5,depthWrite:false})); c.name='clouds'; group.add(c); });
-  var atm=new THREE.Mesh(new THREE.SphereGeometry(1.16,48,48), new THREE.ShaderMaterial({
+  var loadEl=document.getElementById('globeLoading');
+  function dayReady(t){ earthMat.map=t; earthMat.color.set(0xffffff); earthMat.needsUpdate=true; if(loadEl) loadEl.classList.add('off');
+    loader.load(TEX+'earth_normal_2048.jpg', function(n){ earthMat.normalMap=n; earthMat.normalScale=new THREE.Vector2(0.85,0.85); earthMat.needsUpdate=true; });
+    loader.load(TEX+'earth_specular_2048.jpg', function(s){ earthMat.specularMap=s; earthMat.needsUpdate=true; });
+    loader.load(TEX+'earth_clouds_1024.png', function(ct){ var c=new THREE.Mesh(new THREE.SphereGeometry(1.012,48,48), new THREE.MeshLambertMaterial({map:ct,transparent:true,opacity:0.5,depthWrite:false})); c.name='clouds'; group.add(c); });
+  }
+  loader.load('https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-blue-marble.jpg', dayReady, undefined,
+    function(){ loader.load(TEX+'earth_atmos_2048.jpg', dayReady); });
+  var atm=new THREE.Mesh(new THREE.SphereGeometry(1.14,48,48), new THREE.ShaderMaterial({
     vertexShader:'varying vec3 vN; void main(){ vN=normalize(normalMatrix*normal); gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }',
-    fragmentShader:'varying vec3 vN; void main(){ float i=pow(0.68-dot(vN,vec3(0.0,0.0,1.0)),3.5); gl_FragColor=vec4(0.35,0.55,1.0,1.0)*i; }',
+    fragmentShader:'varying vec3 vN; void main(){ float d=dot(vN,vec3(0.0,0.0,1.0)); float i=pow(max(0.62-d,0.0),4.0)*0.55; gl_FragColor=vec4(0.32,0.5,0.95,1.0)*i; }',
     blending:THREE.AdditiveBlending, side:THREE.BackSide, transparent:true, depthWrite:false }));
   scene.add(atm);
   (function(){ var n=900, pos=new Float32Array(n*3);
@@ -939,19 +949,26 @@ renderRoute(); heroLoop();
   var hands=null, mpCam=null, lastPalm=null;
   function loadScript(src){ return new Promise(function(res,rej){ var s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
   function setState(t){ if(state) state.textContent=t; }
-  function fingersUp(lm){ var tips=[8,12,16,20], pips=[6,10,14,18], c=0;
-    for(var i=0;i<4;i++){ if(lm[tips[i]].y<lm[pips[i]].y) c++; } return c; }
+  function extCount(lm){ var tips=[8,12,16,20], pips=[6,10,14,18], c=0, w=lm[0];
+    function d(a,b){ return Math.hypot(a.x-b.x, a.y-b.y); }
+    for(var i=0;i<4;i++){ if(d(lm[tips[i]],w) > d(lm[pips[i]],w)*1.12) c++; } return c; }
+  var lastSay='', resultsSeen=false;
+  function say(t){ if(t!==lastSay){ lastSay=t; setState(t); } }
   function onResults(res){
-    if(!res.multiHandLandmarks||!res.multiHandLandmarks.length){ lastPalm=null; return; }
-    var lm=res.multiHandLandmarks[0], palm=lm[9], up=fingersUp(lm);
-    var pinch=Math.hypot(lm[4].x-lm[8].x, lm[4].y-lm[8].y);
-    if(lastPalm&&up>=3){ var dx=palm.x-lastPalm.x, dy=palm.y-lastPalm.y;
-      vY=-dx*0.55; vX=dy*0.4;
-      if(Math.abs(dx)>0.09) vY=-dx*1.5; }
+    if(!res.multiHandLandmarks||!res.multiHandLandmarks.length){ lastPalm=null; say('把手对准摄像头，掌心对着镜头，慢慢移动'); return; }
+    resultsSeen=true;
+    var lm=res.multiHandLandmarks[0];
+    var palm={x:(lm[0].x+lm[9].x)/2, y:(lm[0].y+lm[9].y)/2};
+    var scale=Math.hypot(lm[0].x-lm[9].x, lm[0].y-lm[9].y)||0.15;
+    var pinch=Math.hypot(lm[4].x-lm[8].x, lm[4].y-lm[8].y)/scale;
+    var up=extCount(lm);
+    if(lastPalm){ var dx=palm.x-lastPalm.x, dy=palm.y-lastPalm.y;
+      rotY += -dx*2.6; rotX = Math.max(-0.9, Math.min(0.9, rotX + dy*2.0));
+      vY = -dx*0.06; vX = dy*0.045; }
     lastPalm=palm;
-    if(pinch<0.05){ tZoom=Math.max(2.15,tZoom-0.03); setState('手势中：合掌捏合 · 正在拉近'); }
-    else if(up===0){ tZoom=Math.min(4.4,tZoom+0.03); setState('手势中：握拳 · 正在拉远'); }
-    else if(up>=4){ setState('手势中：开掌移动旋转 · 挥动加速 · 合掌拉近 · 握拳拉远'); }
+    if(pinch<0.32){ tZoom=Math.max(2.15,tZoom-0.035); say('手势中：合掌捏合 · 正在拉近'); }
+    else if(up===0){ tZoom=Math.min(4.4,tZoom+0.035); say('手势中：握拳 · 正在拉远'); }
+    else say('手势中：移动手掌旋转 · 挥动加速 · 合掌拉近 · 握拳拉远');
   }
   async function startGesture(){
     btn.disabled=true; setState('正在打开摄像头…（画面只在本机处理，绝不上传）');
@@ -965,8 +982,9 @@ renderRoute(); heroLoop();
       }
       mpCam=new Camera(video,{onFrame:async function(){ await hands.send({image:video}); }, width:640, height:480});
       await mpCam.start();
-      gesture=true; video.classList.add('on'); btn.textContent='✋ 关闭手势控制';
-      setState('把手对准摄像头：开掌移动旋转 · 挥动加速 · 合掌捏合拉近 · 握拳拉远');
+      gesture=true; resultsSeen=false; video.classList.add('on'); btn.textContent='✋ 关闭手势控制';
+      setState('把手对准摄像头：移动手掌旋转 · 挥动加速 · 合掌捏合拉近 · 握拳拉远');
+      setTimeout(function(){ if(gesture&&!resultsSeen) say('还没识别到手：手掌正对摄像头、光线亮一点；若一直没反应，可能是识别组件没加载完，关掉手势再开一次'); }, 6000);
     }catch(err){ setState('摄像头没打开（权限或设备问题），已切回鼠标/触摸控制'); gesture=false; }
     btn.disabled=false;
   }
