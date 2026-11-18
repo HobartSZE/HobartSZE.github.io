@@ -124,6 +124,7 @@ h1 .grad{background:linear-gradient(100deg,var(--gold2) 10%,#ffdf9e 45%,var(--go
 .sh-head h3{font-family:var(--serif);font-weight:900;font-size:clamp(23px,3.6vw,32px);line-height:1.35;margin-top:6px}
 .x{margin-left:auto;flex:none;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--panel);color:var(--txt);font-size:17px;cursor:pointer}
 .x:hover{background:var(--panel2)}
+.lesson-video{width:100%;border-radius:14px;border:1px solid var(--line);background:#000;aspect-ratio:16/9;display:block}
 .sec-t{font-family:var(--grot);font-size:11.5px;letter-spacing:.28em;color:var(--muted);margin:30px 0 12px;display:flex;align-items:center;gap:10px}
 .sec-t::after{content:"";flex:1;height:1px;background:var(--line)}
 .intro{font-size:15.5px;line-height:1.95;color:#d8d5cc}
@@ -499,6 +500,8 @@ function openLesson(i){
    <div class="codebox"><div class="cb-bar"><span class="dot" style="background:#ff5f57"></span><span class="dot" style="background:#febc2e"></span><span class="dot" style="background:#28c840"></span><span class="fn">demo.py</span><button class="runbtn" id="runBtn">▶ 运行演示</button></div>
    <pre id="demoCode">${hl(l.code)}</pre>
    <div class="console" id="demoCon"><div class="hd">运行结果</div><div id="demoOut"></div></div></div>
+   ${l.video? `<div class="sec-t">讲解视频</div>
+   <video class="lesson-video" controls preload="metadata" playsinline src="${l.video}"></video>` : ''}
    <div class="sec-t">互动练习 · ${l.quiz.length} 题</div>
    <div id="quizBox"></div>
    <div class="sec-t">动手写 · 即刻判定</div>
@@ -973,13 +976,16 @@ renderRoute(); heroLoop();
   cv.addEventListener('pointerup',endDrag); cv.addEventListener('pointercancel',endDrag);
   cv.addEventListener('wheel',function(e){ e.preventDefault(); tZoom=Math.max(3.25,Math.min(5.0,tZoom+e.deltaY*0.0022)); },{passive:false});
   if('IntersectionObserver' in window){ new IntersectionObserver(function(en){ visible=en[0].isIntersecting; },{threshold:0.02}).observe(wrap); }
-  (function loop(now){ requestAnimationFrame(loop); if(!visible||document.hidden) return;
-    if(!dragging){ rotY+=vY; rotX+=vX;
-      if(!gesture){ vY+=(0.0016-vY)*0.02; vX*=0.95; } else { vX*=0.94; vY*=0.94; }
+  var lastT=performance.now();
+  (function loop(now){ requestAnimationFrame(loop); if(!visible||document.hidden){ lastT=now; return; }
+    var dt=Math.min(0.05,Math.max(0.001,(now-lastT)/1000)); lastT=now; var steps=dt*60;
+    if(!dragging){ rotY+=vY*steps; rotX+=vX*steps;
+      if(!gesture){ vY+=(0.0016-vY)*Math.min(1,0.02*steps); vX*=Math.pow(0.95,steps); }
+      else { var dec=Math.pow(0.92,steps); vX*=dec; vY*=dec; }
       rotX=Math.max(-0.9,Math.min(0.9,rotX)); }
-    zoom+=(tZoom-zoom)*0.08; cam.position.z=zoom;
+    zoom+=(tZoom-zoom)*(1-Math.pow(0.92,steps)); cam.position.z=zoom;
     group.rotation.y=rotY; group.rotation.x=rotX;
-    var cl=group.getObjectByName('clouds'); if(cl) cl.rotation.y+=0.0004;
+    var cl=group.getObjectByName('clouds'); if(cl) cl.rotation.y+=0.0004*steps;
     var s=1+0.25*Math.sin(now*0.003); ring.scale.set(s,s,s);
     renderer.render(scene,cam);
   })(performance.now());
@@ -1002,12 +1008,15 @@ renderRoute(); heroLoop();
     var pinch=Math.hypot(lm[4].x-lm[8].x, lm[4].y-lm[8].y)/scale;
     var up=extCount(lm);
     var now=performance.now();
-    if(pinch<0.32){ if(now-zoomStepAt>380){ tZoom=Math.max(3.25,tZoom-0.28); zoomStepAt=now; } say('手势中：合掌捏合 · 拉近一格'); swipeOrigin=null; lastPalm=palm; return; }
-    if(up===0){ if(now-zoomStepAt>380){ tZoom=Math.min(5.0,tZoom+0.28); zoomStepAt=now; } say('手势中：握拳 · 拉远一格'); swipeOrigin=null; lastPalm=palm; return; }
-    if(!swipeOrigin){ swipeOrigin=palm; say('手势中：向任意方向挥手，地球就转一格'); }
+    if(pinch<0.32){ if(now-zoomStepAt>300){ tZoom=Math.max(3.25,tZoom-0.28); zoomStepAt=now; } say('手势中：合掌捏合 · 拉近一格'); swipeOrigin=null; lastPalm=palm; return; }
+    if(up===0){ if(now-zoomStepAt>300){ tZoom=Math.min(5.0,tZoom+0.28); zoomStepAt=now; } say('手势中：握拳 · 拉远一格'); swipeOrigin=null; lastPalm=palm; return; }
+    if(lastPalm){ var fx=palm.x-lastPalm.x, fy=palm.y-lastPalm.y;
+      vY=Math.max(-0.16,Math.min(0.16, vY-fx*1.5)); vX=Math.max(-0.12,Math.min(0.12, vX+fy*1.15)); }
+    if(!swipeOrigin){ swipeOrigin=palm; say('手势中：移动手掌地球跟着转，挥手转得更多'); }
     else { var dx=palm.x-swipeOrigin.x, dy=palm.y-swipeOrigin.y, dist=Math.hypot(dx,dy);
-      if(dist>0.10 && now-lastSwipeAt>200){ var mag=Math.min(2.2, dist/0.10);
-        vY += -(dx/dist)*0.06*mag; vX += (dy/dist)*0.045*mag;
+      if(dist>0.075 && now-lastSwipeAt>120){ var mag=Math.min(2.4, dist/0.075);
+        vY += -(dx/dist)*0.05*mag; vX += (dy/dist)*0.038*mag;
+        vY=Math.max(-0.2,Math.min(0.2,vY)); vX=Math.max(-0.15,Math.min(0.15,vX));
         swipeOrigin=palm; lastSwipeAt=now; say('手势中：挥手旋转 · 合掌拉近一格 · 握拳拉远一格'); }
     }
     lastPalm=palm;
@@ -1019,10 +1028,10 @@ renderRoute(); heroLoop();
         await loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js');
         await loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js');
         hands=new Hands({locateFile:function(f){ return 'https://cdn.jsdelivr.net/npm/@mediapipe/hands/'+f; }});
-        hands.setOptions({maxNumHands:1, modelComplexity:0, minDetectionConfidence:0.5, minTrackingConfidence:0.5});
+        hands.setOptions({maxNumHands:1, modelComplexity:0, minDetectionConfidence:0.5, minTrackingConfidence:0.4});
         hands.onResults(onResults);
       }
-      mpCam=new Camera(video,{onFrame:async function(){ await hands.send({image:video}); }, width:640, height:480});
+      mpCam=new Camera(video,{onFrame:async function(){ await hands.send({image:video}); }, width:640, height:360});
       await mpCam.start();
       gesture=true; resultsSeen=false; video.classList.add('on'); btn.textContent='✋ 关闭手势控制';
       setState('把手对准摄像头：向左/右/上/下/斜向挥手，地球就转一格 · 合掌捏合拉近 · 握拳拉远');
