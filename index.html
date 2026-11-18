@@ -197,7 +197,7 @@ footer b{color:var(--muted)}
 .hero-left .cta{justify-content:flex-start}
 .hero-left .stats{margin-top:40px}
 .globe-wrap{position:relative;width:100%;max-width:500px;margin:0 auto}
-@media(min-width:921px){.globe-wrap{transform:translateY(-46px)}}
+@media(min-width:921px){.globe-wrap{margin-top:-52px}}
 #globeCv{width:100%;aspect-ratio:1;display:block;cursor:grab;touch-action:none}
 .globe-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;letter-spacing:.14em;pointer-events:none;animation:globePulse 1.6s ease-in-out infinite}
 .globe-loading.off{display:none}
@@ -891,7 +891,7 @@ renderRoute(); heroLoop();
   var renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true});
   renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
   var scene=new THREE.Scene();
-  var cam=new THREE.PerspectiveCamera(38,1,0.1,200); cam.position.set(0,0,3.15);
+  var cam=new THREE.PerspectiveCamera(38,1,0.1,200); cam.position.set(0,0,3.5);
   var group=new THREE.Group(); scene.add(group);
   scene.add(new THREE.AmbientLight(0xffffff,0.55));
   var sun=new THREE.DirectionalLight(0xffffff,1.15); sun.position.set(5,2,4); scene.add(sun);
@@ -925,7 +925,7 @@ renderRoute(); heroLoop();
   dot.position.copy(gz); group.add(dot);
   var ring=new THREE.Mesh(new THREE.RingGeometry(0.02,0.028,32), new THREE.MeshBasicMaterial({color:0xf5c65c,transparent:true,opacity:0.9,side:THREE.DoubleSide}));
   ring.position.copy(gz.clone().multiplyScalar(1.002)); ring.lookAt(gz.clone().multiplyScalar(2)); group.add(ring);
-  var rotX=0.25, rotY=2.74, vX=0, vY=0.0016, zoom=3.15, tZoom=3.15, dragging=false, px=0, py=0, visible=true, gesture=false;
+  var rotX=0.25, rotY=2.74, vX=0, vY=0.0016, zoom=3.5, tZoom=3.5, dragging=false, px=0, py=0, visible=true, gesture=false;
   function resize(){ var w=wrap.clientWidth||480; renderer.setSize(w,w,false); cam.aspect=1; cam.updateProjectionMatrix(); }
   resize(); addEventListener('resize',resize);
   cv.addEventListener('pointerdown',function(e){ dragging=true; px=e.clientX; py=e.clientY; try{ cv.setPointerCapture(e.pointerId); }catch(err){} });
@@ -933,11 +933,11 @@ renderRoute(); heroLoop();
     vY=dx*0.00045; vX=dy*0.00045; rotY+=dx*0.005; rotX=Math.max(-0.9,Math.min(0.9,rotX+dy*0.005)); });
   function endDrag(){ dragging=false; }
   cv.addEventListener('pointerup',endDrag); cv.addEventListener('pointercancel',endDrag);
-  cv.addEventListener('wheel',function(e){ e.preventDefault(); tZoom=Math.max(2.15,Math.min(4.4,tZoom+e.deltaY*0.0022)); },{passive:false});
+  cv.addEventListener('wheel',function(e){ e.preventDefault(); tZoom=Math.max(3.25,Math.min(5.0,tZoom+e.deltaY*0.0022)); },{passive:false});
   if('IntersectionObserver' in window){ new IntersectionObserver(function(en){ visible=en[0].isIntersecting; },{threshold:0.02}).observe(wrap); }
   (function loop(now){ requestAnimationFrame(loop); if(!visible||document.hidden) return;
     if(!dragging){ rotY+=vY; rotX+=vX;
-      if(!gesture){ vY+=(0.0016-vY)*0.02; vX*=0.95; } else { vX*=0.9; vY*=0.9; }
+      if(!gesture){ vY+=(0.0016-vY)*0.02; vX*=0.95; } else { vX*=0.94; vY*=0.94; }
       rotX=Math.max(-0.9,Math.min(0.9,rotX)); }
     zoom+=(tZoom-zoom)*0.08; cam.position.z=zoom;
     group.rotation.y=rotY; group.rotation.x=rotX;
@@ -954,21 +954,25 @@ renderRoute(); heroLoop();
     for(var i=0;i<4;i++){ if(d(lm[tips[i]],w) > d(lm[pips[i]],w)*1.12) c++; } return c; }
   var lastSay='', resultsSeen=false;
   function say(t){ if(t!==lastSay){ lastSay=t; setState(t); } }
+  var swipeOrigin=null, lastSwipeAt=0, zoomStepAt=0;
   function onResults(res){
-    if(!res.multiHandLandmarks||!res.multiHandLandmarks.length){ lastPalm=null; say('把手对准摄像头，掌心对着镜头，慢慢移动'); return; }
+    if(!res.multiHandLandmarks||!res.multiHandLandmarks.length){ lastPalm=null; swipeOrigin=null; say('把手对准摄像头，掌心对着镜头，向左/右/上/下挥手就能旋转'); return; }
     resultsSeen=true;
     var lm=res.multiHandLandmarks[0];
     var palm={x:(lm[0].x+lm[9].x)/2, y:(lm[0].y+lm[9].y)/2};
     var scale=Math.hypot(lm[0].x-lm[9].x, lm[0].y-lm[9].y)||0.15;
     var pinch=Math.hypot(lm[4].x-lm[8].x, lm[4].y-lm[8].y)/scale;
     var up=extCount(lm);
-    if(lastPalm){ var dx=palm.x-lastPalm.x, dy=palm.y-lastPalm.y;
-      rotY += -dx*2.6; rotX = Math.max(-0.9, Math.min(0.9, rotX + dy*2.0));
-      vY = -dx*0.06; vX = dy*0.045; }
+    var now=performance.now();
+    if(pinch<0.32){ if(now-zoomStepAt>380){ tZoom=Math.max(3.25,tZoom-0.28); zoomStepAt=now; } say('手势中：合掌捏合 · 拉近一格'); swipeOrigin=null; lastPalm=palm; return; }
+    if(up===0){ if(now-zoomStepAt>380){ tZoom=Math.min(5.0,tZoom+0.28); zoomStepAt=now; } say('手势中：握拳 · 拉远一格'); swipeOrigin=null; lastPalm=palm; return; }
+    if(!swipeOrigin){ swipeOrigin=palm; say('手势中：向任意方向挥手，地球就转一格'); }
+    else { var dx=palm.x-swipeOrigin.x, dy=palm.y-swipeOrigin.y, dist=Math.hypot(dx,dy);
+      if(dist>0.10 && now-lastSwipeAt>200){ var mag=Math.min(2.2, dist/0.10);
+        vY += -(dx/dist)*0.06*mag; vX += (dy/dist)*0.045*mag;
+        swipeOrigin=palm; lastSwipeAt=now; say('手势中：挥手旋转 · 合掌拉近一格 · 握拳拉远一格'); }
+    }
     lastPalm=palm;
-    if(pinch<0.32){ tZoom=Math.max(2.15,tZoom-0.035); say('手势中：合掌捏合 · 正在拉近'); }
-    else if(up===0){ tZoom=Math.min(4.4,tZoom+0.035); say('手势中：握拳 · 正在拉远'); }
-    else say('手势中：移动手掌旋转 · 挥动加速 · 合掌拉近 · 握拳拉远');
   }
   async function startGesture(){
     btn.disabled=true; setState('正在打开摄像头…（画面只在本机处理，绝不上传）');
@@ -977,13 +981,13 @@ renderRoute(); heroLoop();
         await loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js');
         await loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js');
         hands=new Hands({locateFile:function(f){ return 'https://cdn.jsdelivr.net/npm/@mediapipe/hands/'+f; }});
-        hands.setOptions({maxNumHands:1, modelComplexity:0, minDetectionConfidence:0.6, minTrackingConfidence:0.5});
+        hands.setOptions({maxNumHands:1, modelComplexity:0, minDetectionConfidence:0.5, minTrackingConfidence:0.5});
         hands.onResults(onResults);
       }
       mpCam=new Camera(video,{onFrame:async function(){ await hands.send({image:video}); }, width:640, height:480});
       await mpCam.start();
       gesture=true; resultsSeen=false; video.classList.add('on'); btn.textContent='✋ 关闭手势控制';
-      setState('把手对准摄像头：移动手掌旋转 · 挥动加速 · 合掌捏合拉近 · 握拳拉远');
+      setState('把手对准摄像头：向左/右/上/下/斜向挥手，地球就转一格 · 合掌捏合拉近 · 握拳拉远');
       setTimeout(function(){ if(gesture&&!resultsSeen) say('还没识别到手：手掌正对摄像头、光线亮一点；若一直没反应，可能是识别组件没加载完，关掉手势再开一次'); }, 6000);
     }catch(err){ setState('摄像头没打开（权限或设备问题），已切回鼠标/触摸控制'); gesture=false; }
     btn.disabled=false;
